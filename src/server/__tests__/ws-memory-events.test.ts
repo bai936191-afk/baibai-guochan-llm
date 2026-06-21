@@ -594,6 +594,31 @@ describe('WebSocket goal command events', () => {
 })
 
 describe('WebSocket stream event translation', () => {
+  it('does not forward raw text-mode tool protocol from non-streamed assistant blocks', () => {
+    const out = translateCliMessage({
+      type: 'assistant',
+      message: {
+        content: [
+          { type: 'text', text: 'I will inspect this.\n\n[Tool Call id=call_00_read]' },
+          { type: 'text', text: '[Tool Result for call_00_read]\nstatus=completed\n1 const value = true' },
+          { type: 'tool_use', id: 'read-1', name: 'read_file', input: { file_path: 'src/App.tsx' } },
+        ],
+      },
+    }, `text-protocol-${crypto.randomUUID()}`)
+
+    expect(out).toEqual([
+      { type: 'content_start', blockType: 'text' },
+      { type: 'content_delta', text: 'I will inspect this.' },
+      {
+        type: 'tool_use_complete',
+        toolName: 'read_file',
+        toolUseId: 'read-1',
+        input: { file_path: 'src/App.tsx' },
+        parentToolUseId: undefined,
+      },
+    ])
+  })
+
   it('keeps subagent parent linkage when later stream events omit the parent id', () => {
     const sessionId = `subagent-parent-${crypto.randomUUID()}`
 

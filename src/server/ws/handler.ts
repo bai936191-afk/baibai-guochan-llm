@@ -86,6 +86,59 @@ const sessionTitleState = new Map<string, {
   generationSeq: number
 }>()
 
+function isToolCallProtocolLine(line: string): boolean {
+  return /^\[Tool Call id=[^\]]*\]?$/.test(line.trim())
+}
+
+function isToolResultProtocolLine(line: string): boolean {
+  return /^\[Tool Result for [^\]]*\]?$/.test(line.trim())
+}
+
+function isSyntheticInterruptionLine(line: string): boolean {
+  return /^\[Request interrupted by user(?: for tool use)?\]$/.test(line.trim())
+}
+
+function stripAssistantToolProtocolText(content: string): string {
+  const normalized = content.replace(/\r\n?/g, '\n')
+  if (!normalized.trim()) return ''
+
+  const lines = normalized.split('\n')
+  const nonEmptyLines = lines.filter((line) => line.trim())
+  const hasProtocolLine = nonEmptyLines.some(
+    (line) =>
+      isToolCallProtocolLine(line) ||
+      isToolResultProtocolLine(line) ||
+      isSyntheticInterruptionLine(line),
+  )
+  if (!hasProtocolLine) return content
+
+  if (
+    nonEmptyLines.length > 0 &&
+    nonEmptyLines.every(
+      (line) =>
+        isToolCallProtocolLine(line) ||
+        isToolResultProtocolLine(line) ||
+        isSyntheticInterruptionLine(line),
+    )
+  ) {
+    return ''
+  }
+
+  const firstNonEmpty = nonEmptyLines[0]
+  if (firstNonEmpty && isToolResultProtocolLine(firstNonEmpty)) {
+    return ''
+  }
+
+  const toolResultIndex = lines.findIndex((line) => isToolResultProtocolLine(line))
+  const visibleLines = toolResultIndex >= 0 ? lines.slice(0, toolResultIndex) : lines
+  return visibleLines
+    .filter((line) => !isToolCallProtocolLine(line) && !isSyntheticInterruptionLine(line))
+    .join('\n')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}$/g, '\n\n')
+    .trimEnd()
+}
+
 type RuntimeOverride = {
   providerId: string | null
   modelId: string
@@ -1501,8 +1554,11 @@ export function translateCliMessage(cliMsg: any, sessionId: string): ServerMessa
             if (block.type === 'thinking' && block.thinking) {
               messages.push({ type: 'thinking', text: block.thinking })
             } else if (block.type === 'text' && block.text) {
-              messages.push({ type: 'content_start', blockType: 'text' })
-              messages.push({ type: 'content_delta', text: block.text })
+              const visibleText = stripAssistantToolProtocolText(block.text)
+              if (visibleText.trim()) {
+                messages.push({ type: 'content_start', blockType: 'text' })
+                messages.push({ type: 'content_delta', text: visibleText })
+              }
             } else if (block.type === 'tool_use') {
               const parentToolUseId = cliParentToolUseId(cliMsg)
               rememberToolParentUseId(streamState, block.id, parentToolUseId)

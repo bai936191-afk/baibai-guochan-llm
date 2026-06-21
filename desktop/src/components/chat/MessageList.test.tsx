@@ -1044,6 +1044,66 @@ describe('MessageList nested tool calls', () => {
     expect(container.querySelectorAll('[data-message-shell="assistant"]')).toHaveLength(0)
   })
 
+  it('does not render raw text-mode tool protocol as assistant bubbles', () => {
+    const messages: UIMessage[] = [
+      {
+        id: 'assistant-before-tool',
+        type: 'assistant_text',
+        content: 'Let me inspect that.\n\n[Tool Call id=call_00_read]',
+        timestamp: 1,
+      },
+      {
+        id: 'tool-read',
+        type: 'tool_use',
+        toolName: 'read_file',
+        toolUseId: 'read-1',
+        input: { file_path: 'src/App.tsx' },
+        timestamp: 2,
+      },
+      {
+        id: 'assistant-raw-result',
+        type: 'assistant_text',
+        content: '[Tool Result for call_00_read]\nstatus=completed\n1 const value = true',
+        timestamp: 3,
+      },
+      {
+        id: 'tool-result',
+        type: 'tool_result',
+        toolUseId: 'read-1',
+        content: '1 const value = true',
+        isError: false,
+        timestamp: 4,
+      },
+    ]
+
+    const { renderItems } = buildRenderModel(messages)
+    expect(renderItems).toHaveLength(2)
+    expect(renderItems[0]).toMatchObject({
+      kind: 'message',
+      message: {
+        type: 'assistant_text',
+        content: 'Let me inspect that.',
+      },
+    })
+    expect(renderItems[1]).toMatchObject({ kind: 'tool_group' })
+  })
+
+  it('does not show raw streaming tool protocol text', () => {
+    useChatStore.setState({
+      sessions: {
+        [ACTIVE_TAB]: makeSessionState({
+          chatState: 'streaming',
+          streamingText: '[Tool Result for call_00_read]\nstatus=completed\n1 const value = true',
+        }),
+      },
+    })
+
+    const { container } = render(<MessageList />)
+    expect(container.textContent).not.toContain('[Tool Result for')
+    expect(container.textContent).not.toContain('status=completed')
+    expect(container.querySelectorAll('[data-message-shell="assistant"]')).toHaveLength(0)
+  })
+
   it('renders stopped tool calls as terminal instead of still generating content', () => {
     useChatStore.setState({
       sessions: {

@@ -24,6 +24,7 @@ import { InlineTaskSummary } from './InlineTaskSummary'
 import { CurrentTurnChangeCard } from './CurrentTurnChangeCard'
 import type { AgentTaskNotification, UIAttachment, UIMessage } from '../../types/chat'
 import { formatTokenCount } from '../../lib/formatTokenCount'
+import { stripAssistantToolProtocolText } from '../../lib/assistantProtocolText'
 import { isTouchH5Document } from '../../lib/touchH5'
 import { ConfirmDialog } from '../shared/ConfirmDialog'
 import { clearWindowSelection, getSelectionPopoverPosition, useSelectionPopoverDismiss } from '../../hooks/useSelectionPopoverDismiss'
@@ -583,9 +584,15 @@ export function buildRenderModel(messages: UIMessage[], activeAskUserQuestionToo
     }
   })
 
-  for (const msg of messages) {
-    if (msg.type === 'assistant_text' && !msg.content.trim()) {
-      continue
+  for (let msg of messages) {
+    if (msg.type === 'assistant_text') {
+      const sanitizedContent = stripAssistantToolProtocolText(msg.content)
+      if (!sanitizedContent.trim()) {
+        continue
+      }
+      if (sanitizedContent !== msg.content) {
+        msg = { ...msg, content: sanitizedContent }
+      }
     }
     if (isAgentBackgroundTaskMessage(msg)) {
       continue
@@ -1413,6 +1420,10 @@ export function MessageList({ sessionId, compact = false }: MessageListProps = {
   const messages = sessionState?.messages ?? EMPTY_MESSAGES
   const chatState = sessionState?.chatState ?? 'idle'
   const streamingText = sessionState?.streamingText ?? ''
+  const visibleStreamingText = useMemo(
+    () => stripAssistantToolProtocolText(streamingText),
+    [streamingText],
+  )
   const streamingToolInput = sessionState?.streamingToolInput ?? ''
   const activeThinkingId = sessionState?.activeThinkingId ?? null
   const agentTaskNotifications = sessionState?.agentTaskNotifications ?? EMPTY_AGENT_TASK_NOTIFICATIONS
@@ -1421,7 +1432,7 @@ export function MessageList({ sessionId, compact = false }: MessageListProps = {
       ? sessionState.pendingPermission.toolUseId
       : null
   const shouldFollowContentResize =
-    streamingText.trim().length > 0 ||
+    visibleStreamingText.trim().length > 0 ||
     chatState === 'streaming' ||
     chatState === 'compacting' ||
     chatState === 'tool_executing' ||
@@ -1461,7 +1472,7 @@ export function MessageList({ sessionId, compact = false }: MessageListProps = {
   const branchActionsDisabled =
     isMemberSession ||
     chatState !== 'idle' ||
-    streamingText.trim().length > 0 ||
+    visibleStreamingText.trim().length > 0 ||
     Boolean(activeThinkingId) ||
     Boolean(sessionState?.activeToolUseId) ||
     Boolean(sessionState?.activeToolName)
@@ -2150,8 +2161,8 @@ export function MessageList({ sessionId, compact = false }: MessageListProps = {
             <VirtualSpacer height={virtualTranscriptWindow.afterHeight} position="bottom" />
           ) : null}
 
-          {streamingText.trim() && (
-            <AssistantMessage content={streamingText} isStreaming={chatState === 'streaming'} />
+          {visibleStreamingText.trim() && (
+            <AssistantMessage content={visibleStreamingText} isStreaming={chatState === 'streaming'} />
           )}
 
           {chatState === 'compacting' && !hasCompactingDivider && (
@@ -2243,6 +2254,13 @@ export const MessageBlock = memo(function MessageBlock({
   turnChangedFiles?: string[]
 }) {
   const t = useTranslation()
+  if (message.type === 'assistant_text') {
+    const sanitizedContent = stripAssistantToolProtocolText(message.content)
+    if (!sanitizedContent.trim()) return null
+    if (sanitizedContent !== message.content) {
+      message = { ...message, content: sanitizedContent }
+    }
+  }
 
   switch (message.type) {
     case 'user_text':

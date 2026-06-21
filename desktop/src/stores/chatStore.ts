@@ -9,6 +9,7 @@ import { useTabStore } from './tabStore'
 import { randomSpinnerVerb } from '../config/spinnerVerbs'
 import { notifyDesktop } from '../lib/desktopNotifications'
 import { deriveSessionTitle, isPlaceholderSessionTitle } from '../lib/sessionTitle'
+import { stripAssistantToolProtocolText } from '../lib/assistantProtocolText'
 import { AGENT_LIFECYCLE_TYPES } from '../types/team'
 import type { ComposerAttachment } from '../lib/composerAttachments'
 import type { MessageEntry } from '../types/session'
@@ -473,7 +474,8 @@ function appendAssistantTextMessage(
   model?: string,
   transcriptMessageId?: string,
 ): UIMessage[] {
-  const trimmedContent = content.trim()
+  const sanitizedContent = stripAssistantToolProtocolText(content)
+  const trimmedContent = sanitizedContent.trim()
   if (!trimmedContent) return messages
 
   const last = messages[messages.length - 1]
@@ -498,7 +500,7 @@ function appendAssistantTextMessage(
   if (canMergeIntoLast) {
     const merged: UIMessage = {
       ...last,
-      content: last.content + content,
+      content: last.content + sanitizedContent,
       ...(model ?? last.model ? { model: model ?? last.model } : {}),
       ...(transcriptMessageId ?? last.transcriptMessageId
         ? { transcriptMessageId: transcriptMessageId ?? last.transcriptMessageId }
@@ -512,7 +514,7 @@ function appendAssistantTextMessage(
     {
       id: nextId(),
       type: 'assistant_text',
-      content,
+      content: sanitizedContent,
       timestamp,
       ...(transcriptMessageId ? { transcriptMessageId } : {}),
       ...(model ? { model } : {}),
@@ -2929,7 +2931,8 @@ function pushAssistantHistoryText(
   model?: string,
   transcriptMessageId?: string,
 ): void {
-  if (!content.trim()) return
+  const sanitizedContent = stripAssistantToolProtocolText(content)
+  if (!sanitizedContent.trim()) return
 
   const last = messages[messages.length - 1]
   const canMergeIntoLast =
@@ -2940,7 +2943,7 @@ function pushAssistantHistoryText(
         : !last.transcriptMessageId
     )
   if (canMergeIntoLast) {
-    last.content += content
+    last.content += sanitizedContent
     if (model && !last.model) last.model = model
     if (transcriptMessageId && !last.transcriptMessageId) {
       last.transcriptMessageId = transcriptMessageId
@@ -2951,7 +2954,7 @@ function pushAssistantHistoryText(
   messages.push({
     id: nextId(),
     type: 'assistant_text',
-    content,
+    content: sanitizedContent,
     timestamp,
     ...(transcriptMessageId ? { transcriptMessageId } : {}),
     ...(model ? { model } : {}),
@@ -3321,11 +3324,12 @@ export function mapHistoryMessagesToUiMessages(
       continue
     }
     if (msg.type === 'assistant' && typeof msg.content === 'string') {
-      if (!msg.content.trim()) continue
+      const sanitizedContent = stripAssistantToolProtocolText(msg.content)
+      if (!sanitizedContent.trim()) continue
       uiMessages.push({
         id: msg.id || nextId(),
         type: 'assistant_text',
-        content: msg.content,
+        content: sanitizedContent,
         ...(msg.id ? { transcriptMessageId: msg.id } : {}),
         timestamp,
         model: msg.model,

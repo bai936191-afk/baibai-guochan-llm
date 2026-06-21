@@ -463,6 +463,56 @@ describe('chatStore history mapping', () => {
     ])
   })
 
+  it('strips raw text-mode tool protocol from restored assistant history', () => {
+    const messages: MessageEntry[] = [
+      {
+        id: 'assistant-text-tool-call',
+        type: 'assistant',
+        timestamp: '2026-06-22T00:00:00.000Z',
+        content: [
+          { type: 'text', text: 'I will inspect the file.\n\n[Tool Call id=call_00_read]' },
+          { type: 'tool_use', name: 'read_file', id: 'read-1', input: { file_path: 'src/App.tsx' } },
+        ],
+      },
+      {
+        id: 'assistant-raw-tool-result',
+        type: 'assistant',
+        timestamp: '2026-06-22T00:00:01.000Z',
+        content: '[Tool Result for call_00_read]\nstatus=completed\n1 const value = true',
+      },
+      {
+        id: 'user-tool-result',
+        type: 'tool_result',
+        timestamp: '2026-06-22T00:00:02.000Z',
+        content: [
+          { type: 'tool_result', tool_use_id: 'read-1', content: '1 const value = true' },
+        ],
+      },
+    ]
+
+    const mapped = mapHistoryMessagesToUiMessages(messages)
+
+    expect(mapped).toMatchObject([
+      {
+        type: 'assistant_text',
+        content: 'I will inspect the file.',
+      },
+      {
+        type: 'tool_use',
+        toolName: 'read_file',
+        toolUseId: 'read-1',
+      },
+      {
+        type: 'tool_result',
+        toolUseId: 'read-1',
+      },
+    ])
+    expect(mapped.some((message) =>
+      message.type === 'assistant_text' &&
+      message.content.includes('[Tool Result for'),
+    )).toBe(false)
+  })
+
   it('does not restore internal slash-command breadcrumbs as user history bubbles', () => {
     const messages: MessageEntry[] = [
       {
@@ -2315,7 +2365,7 @@ describe('chatStore history mapping', () => {
       dedupeKey: 'permission:perm-ask-1',
       cooldownScope: 'permission-prompt',
       requestAttention: true,
-      title: 'Claude Code Haha 需要你的确认',
+      title: '白白国产大模型需要你的确认',
       body: 'AskUserQuestion 请求执行，正在等待允许。',
       target: { type: 'session', sessionId: TEST_SESSION_ID },
     })
@@ -3589,7 +3639,7 @@ describe('chatStore history mapping', () => {
       dedupeKey: 'computer-use-permission:cu-1',
       cooldownScope: 'permission-prompt',
       requestAttention: true,
-      title: 'Claude Code Haha 需要你的确认',
+      title: '白白国产大模型需要你的确认',
       body: 'Open Finder and inspect a file',
       target: { type: 'session', sessionId: TEST_SESSION_ID },
     })
@@ -4129,7 +4179,7 @@ describe('chatStore history mapping', () => {
 
     expect(notifyDesktopMock).toHaveBeenCalledWith(expect.objectContaining({
       cooldownScope: 'agent-completion',
-      title: 'Claude Code Haha 已完成回复',
+      title: '白白国产大模型已完成回复',
       body: '结果 修复完成 bun test 已通过',
       target: { type: 'session', sessionId: TEST_SESSION_ID },
     }))
