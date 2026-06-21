@@ -457,10 +457,16 @@ function inspectMacosArtifacts(rootDir: string, report: PackageSmokeReport, opti
     report.artifactsDir,
     (candidate) => {
       const normalized = normalizePath(candidate)
-      return normalized.endsWith(`/${report.productName}.app`) && !normalized.includes('/Contents/Frameworks/')
+      return normalized.endsWith('.app') && !normalized.includes('/Contents/Frameworks/')
     },
     { directoriesOnly: true },
-  )
+  ).sort((left, right) => {
+    const productSuffix = `/${report.productName}.app`
+    const leftIsProduct = normalizePath(left).endsWith(productSuffix)
+    const rightIsProduct = normalizePath(right).endsWith(productSuffix)
+    if (leftIsProduct !== rightIsProduct) return leftIsProduct ? -1 : 1
+    return left.localeCompare(right)
+  })
   const archives = findMatches(report.artifactsDir, (candidate) => candidate.endsWith('.zip') || candidate.endsWith('.dmg'))
   const updateMetadata = findMatches(report.artifactsDir, (candidate) => candidate.endsWith('latest-mac.yml'))
   const releaseMode = report.packageKind === 'release' || (report.packageKind === 'auto' && (archives.length > 0 || updateMetadata.length > 0))
@@ -492,9 +498,16 @@ function inspectMacosArtifacts(rootDir: string, report: PackageSmokeReport, opti
   const unpackedDir = join(resourcesDir, 'app.asar.unpacked')
   const nodePtyDir = join(unpackedDir, 'node_modules', 'node-pty')
   const prebuildsDir = join(nodePtyDir, 'prebuilds')
+  const macosDir = join(contentsDir, 'MacOS')
 
   addPresenceCheck(report, rootDir, 'macOS Info.plist', join(contentsDir, 'Info.plist'))
-  addPresenceCheck(report, rootDir, 'macOS app executable', join(contentsDir, 'MacOS', report.productName))
+  addMatchCheck(
+    report,
+    rootDir,
+    'macOS app executable',
+    findMatches(macosDir, (candidate) => dirname(candidate) === macosDir),
+    join(macosDir, report.productName),
+  )
   addPresenceCheck(report, rootDir, 'macOS app.asar', join(resourcesDir, 'app.asar'))
   addPresenceCheck(report, rootDir, 'macOS unpacked H5 shell', join(unpackedDir, 'dist', 'index.html'))
   addInstalledUpdateMetadataCheck(

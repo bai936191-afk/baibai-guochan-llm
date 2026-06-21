@@ -32,6 +32,10 @@ function writeFile(rootDir: string, relativePath: string, content = 'ok') {
   writeFileSync(fullPath, content)
 }
 
+function toPortablePath(value: string) {
+  return value.replaceAll('\\', '/')
+}
+
 const tempDirs: string[] = []
 
 afterEach(() => {
@@ -306,7 +310,7 @@ describe('packaged artifact inspection', () => {
     })
 
     expect(report.passed).toBe(true)
-    expect(report.artifactsDir.endsWith('desktop/build-artifacts/windows-x64')).toBe(true)
+    expect(toPortablePath(report.artifactsDir).endsWith('desktop/build-artifacts/windows-x64')).toBe(true)
   })
 
   test('passes Windows directory-only checks for electron-builder --dir output', async () => {
@@ -364,7 +368,7 @@ describe('packaged artifact inspection', () => {
     })
 
     expect(report.passed).toBe(true)
-    expect(report.artifactsDir.endsWith('desktop/build-artifacts/linux-x64')).toBe(true)
+    expect(toPortablePath(report.artifactsDir).endsWith('desktop/build-artifacts/linux-x64')).toBe(true)
   })
 
   test('accepts Linux architecture-specific update metadata from arm64 builds', async () => {
@@ -435,7 +439,7 @@ describe('packaged artifact inspection', () => {
     })
 
     expect(report.passed).toBe(true)
-    expect(report.passedChecks.some((check) => check.path.includes('linux-arm64-unpacked/resources/app.asar'))).toBe(true)
+    expect(report.passedChecks.some((check) => toPortablePath(check.path).includes('linux-arm64-unpacked/resources/app.asar'))).toBe(true)
   })
 
   test('passes Linux directory-only checks for electron-builder --dir output', async () => {

@@ -169,9 +169,9 @@ try {
   }
 
   Write-Step 'Fixing Windows update metadata...'
-  & bun run ./scripts/fix-windows-latest-yml.ts $electronOutputDir
+  & bun run ./scripts/fix-update-metadata.ts $electronOutputDir windows
   if ($LASTEXITCODE -ne 0) {
-    throw "[build-windows-x64] fix-windows-latest-yml failed (exit $LASTEXITCODE)"
+    throw "[build-windows-x64] fix-update-metadata failed (exit $LASTEXITCODE)"
   }
 } finally {
   Pop-Location

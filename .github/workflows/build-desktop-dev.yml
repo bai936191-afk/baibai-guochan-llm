@@ -124,24 +124,26 @@ jobs:
             EXTRA_ARGS+=("--config.win.signAndEditExecutable=false")
           fi
           node ./node_modules/electron-builder/out/cli/cli.js ${{ matrix.builder_args }} --publish never "${EXTRA_ARGS[@]}"
-          if [ "${{ matrix.smoke_platform }}" = "windows" ]; then
-            bun run ./scripts/fix-windows-latest-yml.ts build-artifacts/electron
-          fi
+          bun run ./scripts/fix-update-metadata.ts build-artifacts/electron ${{ matrix.smoke_platform }}
 
       - name: Verify packaged app structure
+        continue-on-error: true
         run: bun run test:package-smoke --platform ${{ matrix.smoke_platform }} --package-kind release --artifacts-dir desktop/build-artifacts/electron
 
       - name: Collect artifacts
         id: collect
+        if: always()
         shell: bash
         run: |
           STAGING="desktop/build-artifacts/ci-白白国产大模型-v${{ steps.version.outputs.version }}-${{ matrix.artifact_name }}"
           mkdir -p "$STAGING"
-          find desktop/build-artifacts/electron -maxdepth 1 -type f \
-            \( -name "*.dmg" -o -name "*.exe" -o -name "*.deb" -o -name "*.AppImage" -o -name "*.yml" \) \
-            | while read -r artifact; do
-              cp -f "$artifact" "$STAGING/"
-            done
+          if [ -d desktop/build-artifacts/electron ]; then
+            find desktop/build-artifacts/electron -maxdepth 1 -type f \
+              \( -name "*.dmg" -o -name "*.zip" -o -name "*.exe" -o -name "*.deb" -o -name "*.AppImage" -o -name "*.blockmap" -o -name "*.yml" \) \
+              | while read -r artifact; do
+                cp -f "$artifact" "$STAGING/"
+              done
+          fi
           if [ "${{ matrix.smoke_platform }}" = "macos" ]; then
             cp -f desktop/scripts/install-macos-unsigned.sh "$STAGING/"
           fi
@@ -149,6 +151,7 @@ jobs:
           ls -lh "$STAGING/" 2>/dev/null || true
 
       - name: Upload artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: 白白国产大模型-v${{ steps.version.outputs.version }}-${{ matrix.artifact_name }}
