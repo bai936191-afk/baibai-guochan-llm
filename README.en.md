@@ -1,214 +1,152 @@
-# Claude Code Haha
-
-<p align="center">
-  <img src="docs/images/logo-horizontal.png" alt="Claude Code Haha" width="480">
-</p>
+# Baibai Guochan LLM
 
 <div align="center">
 
-[![GitHub Stars](https://img.shields.io/github/stars/NanmiCoder/cc-haha?style=social)](https://github.com/NanmiCoder/cc-haha/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/NanmiCoder/cc-haha?style=social)](https://github.com/NanmiCoder/cc-haha/network/members)
-[![GitHub Issues](https://img.shields.io/github/issues/NanmiCoder/cc-haha)](https://github.com/NanmiCoder/cc-haha/issues)
-[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/NanmiCoder/cc-haha)](https://github.com/NanmiCoder/cc-haha/pulls)
-[![License](https://img.shields.io/github/license/NanmiCoder/cc-haha)](https://github.com/NanmiCoder/cc-haha/blob/main/LICENSE)
-[![中文](https://img.shields.io/badge/🇨🇳_中文-Available-green)](README.md)
-[![English](https://img.shields.io/badge/🇺🇸_English-当前-blue)](README.en.md)
-[![Docs](https://img.shields.io/badge/📖_Documentation-Visit-FF7A00)](https://claudecode-haha.relakkesyang.org)
+[![简体中文](https://img.shields.io/badge/🇨🇳_简体中文-Available-green)](README.md)
+[![English](https://img.shields.io/badge/🇺🇸_English-Current-blue)](README.en.md)
+[![繁體中文](https://img.shields.io/badge/🇹🇼_繁體中文-Available-green)](README.zh-TW.md)
+[![日本語](https://img.shields.io/badge/🇯🇵_日本語-Available-green)](README.ja.md)
+[![한국어](https://img.shields.io/badge/🇰🇷_한국어-Available-green)](README.ko.md)
+[![Español](https://img.shields.io/badge/🇪🇸_Español-Available-green)](README.es.md)
+[![Français](https://img.shields.io/badge/🇫🇷_Français-Available-green)](README.fr.md)
+[![Deutsch](https://img.shields.io/badge/🇩🇪_Deutsch-Available-green)](README.de.md)
 
 </div>
 
-A Claude Code build repaired from the source leaked from Anthropic's npm registry on 2026-03-31. Claude Code Haha is now primarily a **desktop Claude Code workspace** for macOS, Windows, and Linux: sessions, projects, branch / Worktree launch, right-side file changes, code diffs, permission review, provider setup, Computer Use, H5 remote access, IM integration, and scheduled tasks in one app.
+Baibai Guochan LLM is a desktop Agent workbench customized from [NanmiCoder/cc-haha](https://github.com/NanmiCoder/cc-haha), offering an out-of-the-box Windows / macOS / Linux GUI for ordinary users.
 
-<p align="center">
-  <a href="#desktop-preview">Desktop Preview</a> · <a href="#install-the-desktop-app">Install</a> · <a href="#desktop-highlights">Highlights</a> · <a href="#sponsorship--partnership">Sponsorship</a> · <a href="#more-documentation">More Docs</a>
-</p>
+This build connects to `https://ai.xkxkbbk.cloud` by default. Enter your key on first launch to fetch models and start using it. Built-in code Agent tools support project directories, file read/edit, command execution, web search, task lists, and session management.
 
----
+## Download
 
-## Desktop Preview
+Official installers are hosted on GitHub Releases:
 
-The Claude Code Haha desktop app brings sessions, multi-project navigation, branch / Worktree controls, right-side file changes, code diffs, permission review, provider setup, and remote access into one graphical workspace for daily development flows beyond the terminal.
+[Download the latest version](https://github.com/bai936191-afk/baibai-guochan-llm/releases/latest)
 
-<p align="center">
-  <a href="https://github.com/NanmiCoder/cc-haha/releases"><img src="https://img.shields.io/badge/⬇_Download_Desktop-macOS_%7C_Windows_%7C_Linux-FF7A00?style=for-the-badge" alt="Download Desktop"></a>
-  &nbsp;
-  <a href="docs/desktop/04-installation.md"><img src="https://img.shields.io/badge/📖_Install_Guide-Guide-gray?style=for-the-badge" alt="Install Guide"></a>
-</p>
+Current version: `v0.4.3`
 
-<table>
-  <tr>
-    <td align="center" width="25%"><img src="docs/images/desktop_ui/10_desktop_workspace.png" alt="Desktop workspace"><br><b>Desktop Workspace</b></td>
-    <td align="center" width="25%"><img src="docs/images/desktop_ui/13_workspace_changes_worktree.png" alt="Right-side changes and Worktree"><br><b>Right-side Changes & Worktree</b></td>
-    <td align="center" width="25%"><img src="docs/images/desktop_ui/02_edit_code.png" alt="Code editing"><br><b>Code Editing & Diff View</b></td>
-    <td align="center" width="25%"><img src="docs/images/desktop_ui/03_ask_question_and_permission.png" alt="Permission control"><br><b>Permission Review & AI Questions</b></td>
-  </tr>
-  <tr>
-    <td align="center" width="25%"><img src="docs/images/desktop_ui/12_h5_access.png" alt="H5 remote access"><br><b>H5 Remote Access</b></td>
-    <td align="center" width="25%"><img src="docs/images/desktop_ui/11_token_usage.png" alt="Token usage"><br><b>Token Usage</b></td>
-    <td align="center" width="25%"><img src="docs/images/desktop_ui/06_settings_computer_use.png" alt="Computer Use"><br><b>Computer Use</b></td>
-    <td align="center" width="25%"><img src="docs/images/desktop_ui/08_scheduled_task.png" alt="Scheduled tasks"><br><b>Scheduled Tasks</b></td>
-  </tr>
-</table>
+| OS | Recommended file |
+| --- | --- |
+| Windows x64 | `Baibai-Guochan-LLM-0.4.3-win-x64.exe` |
+| macOS Apple Silicon | `Baibai-Guochan-LLM-0.4.3-mac-arm64.dmg` |
+| macOS Intel | `Baibai-Guochan-LLM-0.4.3-mac-x64.dmg` |
+| Linux x64 | `Baibai-Guochan-LLM-0.4.3-linux-x86_64.AppImage` or `Baibai-Guochan-LLM-0.4.3-linux-amd64.deb` |
+| Linux ARM64 | `Baibai-Guochan-LLM-0.4.3-linux-arm64.AppImage` or `Baibai-Guochan-LLM-0.4.3-linux-arm64.deb` |
 
----
+> The current build is not signed with a commercial code-signing certificate. Windows and macOS may show a security confirmation on first install — this is normal for unsigned installers.
+> Download filenames use ASCII, but the installed app name still displays as "白白国产大模型".
 
-## Install the Desktop App
+## Product Blueprint
 
-1. Download the macOS / Windows / Linux desktop installer from [Releases](https://github.com/NanmiCoder/cc-haha/releases).
-2. On first launch, configure your model provider, API key, and default model in Settings.
-3. This build is currently unsigned, so the first launch needs a one-time manual approval (clear quarantine on macOS, click "Run anyway" on Windows). See the [desktop installation guide](docs/desktop/04-installation.md).
+```mermaid
+flowchart TD
+  A["User opens desktop app"] --> B["Enter API key"]
+  B --> C["Fetch available models from server"]
+  C --> D["Select model, reasoning effort, and permission mode"]
+  D --> E["Enter project session"]
+  E --> F["Read / search / edit code"]
+  E --> G["Run commands and invoke tools"]
+  E --> H["Web search and page fetching"]
+  F --> I["Generate replies, code changes, and session records"]
+  G --> I
+  H --> I
+```
 
-## Run the CLI from Source
+### Completed
 
-For users who want to debug the underlying CLI, server, or local development flow:
+- Desktop installers: Windows x64, macOS ARM64, macOS x64, Linux x64, Linux ARM64.
+- Default service endpoint: `https://ai.xkxkbbk.cloud`.
+- First-launch key entry flow.
+- Fetch model list from server, no longer relying on fixed official models.
+- Built-in Agent tools: file, search, command, web, task, notes, etc.
+- Compatibility for Chinese directory and Chinese filename tool calls.
+- Basic Chinese UI and Chinese install instructions.
+- Session operations: export, copy session ID, rewind to this point, etc.
+- GitHub Actions auto-packaging for all platforms.
+- Long-term Release download entry.
+
+### Multi-language Blueprint
+
+| Phase | Language and scope |
+| --- | --- |
+| Current version | Simplified Chinese first, with some English technical terms retained. |
+| Next phase | Add English UI, README, Release Notes, and install instructions. |
+| Future expansion | Support Traditional Chinese, Japanese, 한국어, Español, Français, Deutsch language packs. |
+| Coverage | Main UI, settings page, permission dialogs, error messages, model capability tags, installer copy, update notes. |
+
+### Future Plans
+
+- Add proper code signing to reduce Windows SmartScreen and macOS Gatekeeper prompts.
+- Improve model capability display so reasoning, image, and context-window info comes entirely from the server.
+- Complete the multi-language system to let users switch language in settings.
+- Complete the auto-update pipeline, prioritizing `latest*.yml` metadata from Releases.
+- Harden tool-call error tolerance, continuing to tolerate occasional wrong parameter names from models.
+- Add more end-to-end tests covering file attachments, image attachments, long sessions, and interruption recovery.
+
+## Installation
+
+### Windows
+
+1. Download `Baibai-Guochan-LLM-0.4.3-win-x64.exe`.
+2. Double-click the installer.
+3. Choose the install path and finish installation.
+4. Open the desktop shortcut and enter your key.
+
+### macOS
+
+1. Download `mac-arm64.dmg` or `mac-x64.dmg` depending on your chip.
+2. Open the DMG and drag the app into Applications.
+3. If the system says it cannot be opened, go to the Security pane in System Settings and allow it once, or use the `install-macos-unsigned.sh` helper from the Release.
+
+### Linux
+
+AppImage:
+
+```bash
+chmod +x Baibai-Guochan-LLM-0.4.3-linux-x86_64.AppImage
+./Baibai-Guochan-LLM-0.4.3-linux-x86_64.AppImage
+```
+
+Debian / Ubuntu:
+
+```bash
+sudo apt install ./Baibai-Guochan-LLM-0.4.3-linux-amd64.deb
+```
+
+For ARM64 devices, use the package whose filename contains `arm64`.
+
+## Development
 
 ```bash
 bun install
-cp .env.example .env
-./bin/claude-haha
+cd desktop
+bun install
+bun run dev
 ```
 
-See [environment variables](docs/en/guide/env-vars.md) and [global usage](docs/en/guide/global-usage.md) for more configuration options.
+Common validation:
 
----
+```bash
+cd desktop
+bun run lint
+bun test ../scripts/quality-gate/package-smoke/index.test.ts
+```
 
-## Desktop Highlights
+Local Windows packaging:
 
-- **Multi-session workspace**: tabs, project switching, terminal entry, and session history in one place.
-- **Branch / Worktree launch**: choose a repository branch and decide whether to use the current working tree or an isolated Worktree.
-- **Right-side file changes**: review changed files, added/removed lines, and current workspace state while chatting.
-- **Visual code changes**: inspect edits, file writes, and diffs directly in the desktop app.
-- **Permission review**: approve risky commands, tool calls, and model follow-up questions in the GUI.
-- **Multi-provider setup**: configure Anthropic-compatible APIs, third-party models, WebSearch fallback, and local options.
-- **Computer Use**: let the agent take screenshots, click, type, and control desktop apps after authorization.
-- **H5 remote access**: open the current desktop session from a phone or another device with a one-time token.
-- **IM integration**: chat, switch projects, and approve actions through Telegram / Feishu / WeChat / DingTalk.
-- **Scheduled tasks and usage stats**: create planned tasks and track local token usage trends.
+```powershell
+cd desktop
+bun run build:windows-x64
+```
 
----
+## Upstream Declaration
 
-## More Documentation
+This project is a customized build based on [NanmiCoder/cc-haha](https://github.com/NanmiCoder/cc-haha). Please retain the upstream project declaration, license, and disclaimer.
 
-| Document | Description |
-|------|------|
-| [Environment Variables](docs/en/guide/env-vars.md) | Full env var reference and configuration methods |
-| [Third-Party Models](docs/en/guide/third-party-models.md) | Using OpenAI / DeepSeek / Ollama and other non-Anthropic models |
-| [Contributing](docs/en/guide/contributing.md) | Local tests, live model baselines, PR gates, and release gates |
-| [Memory System](docs/memory/01-usage-guide.md) | Cross-session persistent memory usage and implementation |
-| [Multi-Agent System](docs/agent/01-usage-guide.md) | Agent orchestration, parallel tasks and Teams collaboration |
-| [Skills System](docs/skills/01-usage-guide.md) | Extensible capability plugins, custom workflows and conditional activation |
-| [IM Integration](docs/im/) | Remote chat, project switching, and permission approval via Telegram / Feishu / WeChat / DingTalk |
-| [Computer Use](docs/en/features/computer-use.md) | Desktop control (screenshots, mouse, keyboard) — [Architecture](docs/en/features/computer-use-architecture.md) |
-| [Desktop App](docs/desktop/) | Electron + React GUI client — [Quick Start](docs/desktop/01-quick-start.md) \| [Architecture](docs/desktop/02-architecture.md) \| [Installation](docs/desktop/04-installation.md) |
-| [Global Usage](docs/en/guide/global-usage.md) | Run claude-haha from any directory |
-| [FAQ](docs/en/guide/faq.md) | Common error troubleshooting |
-| [Source Fixes](docs/en/reference/fixes.md) | Fixes compared with the original leaked source |
-| [Project Structure](docs/en/reference/project-structure.md) | Code directory structure |
+The upstream project is repaired from the Claude Code source leaked from Anthropic's npm registry on 2026-03-31, and is for study and research only. The original source copyright belongs to Anthropic.
 
----
+## License and Release Notes
 
-## Sponsorship & Partnership
-
-This project is maintained in the author's spare time. Corporate or individual sponsorships are welcome to support ongoing development. Custom features, integrations, and business partnerships are also open for discussion.
-
-<table>
-  <thead>
-    <tr>
-      <th width="220">Sponsor</th>
-      <th align="left">Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td align="center" valign="middle">
-        <a href="https://jiekou.ai/referral?invited_code=OBNU3K">
-          <img src="docs/images/sponsors/jiekou-logo.svg" width="72" alt="JieKou AI"><br>
-          <strong>接口AI</strong>
-        </a>
-      </td>
-      <td valign="middle">
-        Thanks to <a href="https://jiekou.ai/referral?invited_code=OBNU3K">JieKou AI</a> for sponsoring this project. JieKou AI provides official model resources with stable, high-performance API access. Subscription bundles are priced at 20% off the official rate; new users who register through <a href="https://jiekou.ai/referral?invited_code=OBNU3K">this link</a> and bind GitHub can claim a $3 coupon.
-      </td>
-    </tr>
-    <tr>
-      <td align="center" valign="middle">
-        <a href="https://www.shengsuanyun.com/?from=CH_LEJ88KWR">
-          <img src="docs/images/sponsors/shengsuanyun-logo.svg" width="180" alt="ShengSuanYun">
-        </a>
-      </td>
-      <td valign="middle">
-        Thanks to <a href="https://www.shengsuanyun.com/?from=CH_LEJ88KWR">ShengSuanYun</a> for sponsoring this project. ShengSuanYun is an industrial-grade AI task parallel execution platform for AI Native Teams, aggregating Claude, ChatGPT, Gemini, and other LLM, image, and video model capacity through direct, non-reverse-engineered access. Its platform SLA reaches 99.7%, with <a href="https://watch.shengsuanyun.com/status/shengsuanyun">service status</a> available online. It also supports dedicated enterprise gateways, cost and permission controls, smart routing, security protection, BYOK, usage-based billing, upcoming tokens plans, and invoicing. New users registering through <a href="https://www.shengsuanyun.com/?from=CH_LEJ88KWR">this link</a> can receive 10 yuan in model credits plus a 10% first top-up bonus.
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-📧 **Contact**: relakkes@gmail.com
-
----
-
-## ☕ Buy Me a Coffee
-
-If this project helps you, consider buying me a coffee — every bit of support keeps this project going ❤️
-
-<table>
-<tr>
-<td align="center" width="33%">
-<img src="docs/images/donate/wechat_pay.jpeg" width="250" alt="WeChat Pay"><br>
-<b>WeChat Pay</b>
-</td>
-<td align="center" width="33%">
-<img src="docs/images/donate/zfb_pay.png" width="250" alt="Alipay"><br>
-<b>Alipay</b>
-</td>
-<td align="center" width="33%">
-<a href="https://buymeacoffee.com/relakkes" target="_blank">
-<img src="docs/images/donate/bmc_button.png" width="250" alt="Buy Me a Coffee">
-</a><br>
-<b>Buy Me a Coffee</b>
-</td>
-</tr>
-</table>
-
----
-
-## Tech Stack
-
-| Category | Technology |
-|------|------|
-| Language | TypeScript |
-| Desktop app | Electron |
-| Desktop UI | React + Vite |
-| Local runtime | [Bun](https://bun.sh) |
-| Terminal UI | React + [Ink](https://github.com/vadimdemedes/ink) |
-| CLI parsing | Commander.js |
-| API | Anthropic SDK |
-| Protocols | MCP, LSP |
-
-## Thanks
-
-Thanks to the following open-source projects and community practices for reference and inspiration:
-
-- [React](https://github.com/facebook/react): frontend engineering and component-based UI ecosystem.
-- [Electron](https://github.com/electron/electron): cross-platform desktop app capabilities and engineering practices.
-- [cc-switch](https://github.com/farion1231/cc-switch): reference for model provider configuration.
-
----
-
-## ⭐ Star History
-
-If this project helps you, please support it with a ⭐ Star so more people can discover Claude Code Haha.
-
-<a href="https://www.star-history.com/#NanmiCoder/cc-haha&Date">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=NanmiCoder/cc-haha&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=NanmiCoder/cc-haha&type=Date" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=NanmiCoder/cc-haha&type=Date" />
-  </picture>
-</a>
-
----
-
-## Disclaimer
-
-This repository is based on the Claude Code source leaked from the Anthropic npm registry on 2026-03-31. All original source code copyrights belong to [Anthropic](https://www.anthropic.com). It is provided for learning and research purposes only.
+- This repo currently recommends staying private.
+- Before redistributing, open-sourcing, or commercial use, first confirm upstream license and related code-source risks.
+- Installers in Releases are built by GitHub Actions and are not signed with a commercial code-signing certificate.

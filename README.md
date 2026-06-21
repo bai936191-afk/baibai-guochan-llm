@@ -1,5 +1,18 @@
 # 白白国产大模型
 
+<div align="center">
+
+[![简体中文](https://img.shields.io/badge/🇨🇳_简体中文-当前-blue)](README.md)
+[![English](https://img.shields.io/badge/🇺🇸_English-Available-green)](README.en.md)
+[![繁體中文](https://img.shields.io/badge/🇹🇼_繁體中文-Available-green)](README.zh-TW.md)
+[![日本語](https://img.shields.io/badge/🇯🇵_日本語-Available-green)](README.ja.md)
+[![한국어](https://img.shields.io/badge/🇰🇷_한국어-Available-green)](README.ko.md)
+[![Español](https://img.shields.io/badge/🇪🇸_Español-Available-green)](README.es.md)
+[![Français](https://img.shields.io/badge/🇫🇷_Français-Available-green)](README.fr.md)
+[![Deutsch](https://img.shields.io/badge/🇩🇪_Deutsch-Available-green)](README.de.md)
+
+</div>
+
 白白国产大模型是基于 [NanmiCoder/cc-haha](https://github.com/NanmiCoder/cc-haha) 定制的桌面端 Agent 工作台，面向普通用户提供开箱即用的 Windows / macOS / Linux 图形界面。
 
 本版本默认接入 `https://ai.xkxkbbk.cloud`，首次启动后输入密钥即可获取模型并开始使用。内置代码 Agent 常用工具，支持项目目录、文件读取与编辑、命令执行、联网检索、任务清单和会话管理等能力。
@@ -25,18 +38,19 @@
 
 ## 产品蓝图
 
-每个语言版本的产品流程图存放在独立文件中，点击下方对应语言查看：
-
-| 语言 | 蓝图文件 |
-| --- | --- |
-| 🇨🇳 简体中文（默认） | [blueprint.zh-CN.md](docs/blueprints/blueprint.zh-CN.md) |
-| 🇺🇸 English | [blueprint.en.md](docs/blueprints/blueprint.en.md) |
-| 🇹🇼 繁體中文 | [blueprint.zh-TW.md](docs/blueprints/blueprint.zh-TW.md) |
-| 🇯🇵 日本語 | [blueprint.ja.md](docs/blueprints/blueprint.ja.md) |
-| 🇰🇷 한국어 | [blueprint.ko.md](docs/blueprints/blueprint.ko.md) |
-| 🇪🇸 Español | [blueprint.es.md](docs/blueprints/blueprint.es.md) |
-| 🇫🇷 Français | [blueprint.fr.md](docs/blueprints/blueprint.fr.md) |
-| 🇩🇪 Deutsch | [blueprint.de.md](docs/blueprints/blueprint.de.md) |
+```mermaid
+flowchart TD
+  A["用户打开桌面应用"] --> B["输入 API 密钥"]
+  B --> C["从服务端获取可用模型"]
+  C --> D["选择模型、推理强度和权限模式"]
+  D --> E["进入项目会话"]
+  E --> F["读取/搜索/编辑代码"]
+  E --> G["运行命令和调用工具"]
+  E --> H["联网搜索与网页抓取"]
+  F --> I["生成回复、代码变更和会话记录"]
+  G --> I
+  H --> I
+```
 
 ### 已完成
 
