@@ -25,6 +25,8 @@
 
 ## 产品蓝图
 
+### 简体中文
+
 ```mermaid
 flowchart TD
   A["用户打开桌面应用"] --> B["输入 API 密钥"]
@@ -35,6 +37,118 @@ flowchart TD
   E --> G["运行命令和调用工具"]
   E --> H["联网搜索与网页抓取"]
   F --> I["生成回复、代码变更和会话记录"]
+  G --> I
+  H --> I
+```
+
+### English
+
+```mermaid
+flowchart TD
+  A["User opens desktop app"] --> B["Enter API key"]
+  B --> C["Fetch available models from server"]
+  C --> D["Select model, reasoning effort, and permission mode"]
+  D --> E["Enter project session"]
+  E --> F["Read / search / edit code"]
+  E --> G["Run commands and invoke tools"]
+  E --> H["Web search and page fetching"]
+  F --> I["Generate replies, code changes, and session records"]
+  G --> I
+  H --> I
+```
+
+### 繁體中文
+
+```mermaid
+flowchart TD
+  A["使用者開啟桌面應用"] --> B["輸入 API 金鑰"]
+  B --> C["從伺服器端取得可用模型"]
+  C --> D["選擇模型、推理強度與權限模式"]
+  D --> E["進入專案會話"]
+  E --> F["讀取 / 搜尋 / 編輯程式碼"]
+  E --> G["執行命令並呼叫工具"]
+  E --> H["聯網搜尋與網頁抓取"]
+  F --> I["產生回覆、程式碼變更與會話記錄"]
+  G --> I
+  H --> I
+```
+
+### 日本語
+
+```mermaid
+flowchart TD
+  A["ユーザーがデスクトップアプリを開く"] --> B["APIキーを入力"]
+  B --> C["サーバーから利用可能なモデルを取得"]
+  C --> D["モデル、推論強度、権限モードを選択"]
+  D --> E["プロジェクトセッションに入る"]
+  E --> F["コードの読み取り / 検索 / 編集"]
+  E --> G["コマンドの実行とツールの呼び出し"]
+  E --> H["Web検索とページ取得"]
+  F --> I["回答、コード変更、セッション記録を生成"]
+  G --> I
+  H --> I
+```
+
+### 한국어
+
+```mermaid
+flowchart TD
+  A["사용자가 데스크톱 앱 실행"] --> B["API 키 입력"]
+  B --> C["서버에서 사용 가능한 모델 가져오기"]
+  C --> D["모델, 추론 강도, 권한 모드 선택"]
+  D --> E["프로젝트 세션 진입"]
+  E --> F["코드 읽기 / 검색 / 편집"]
+  E --> G["명령 실행 및 도구 호출"]
+  E --> H["웹 검색 및 페이지 가져오기"]
+  F --> I["응답, 코드 변경, 세션 기록 생성"]
+  G --> I
+  H --> I
+```
+
+### Español
+
+```mermaid
+flowchart TD
+  A["El usuario abre la app de escritorio"] --> B["Introducir la clave de API"]
+  B --> C["Obtener modelos disponibles del servidor"]
+  C --> D["Seleccionar modelo, intensidad de razonamiento y modo de permisos"]
+  D --> E["Entrar en la sesión del proyecto"]
+  E --> F["Leer / buscar / editar código"]
+  E --> G["Ejecutar comandos e invocar herramientas"]
+  E --> H["Búsqueda web y captura de páginas"]
+  F --> I["Generar respuestas, cambios de código y registros de sesión"]
+  G --> I
+  H --> I
+```
+
+### Français
+
+```mermaid
+flowchart TD
+  A["L'utilisateur ouvre l'application de bureau"] --> B["Saisir la clé API"]
+  B --> C["Récupérer les modèles disponibles depuis le serveur"]
+  C --> D["Choisir le modèle, l'intensité de raisonnement et le mode d'autorisation"]
+  D --> E["Entrer dans la session de projet"]
+  E --> F["Lire / rechercher / éditer le code"]
+  E --> G["Exécuter des commandes et appeler des outils"]
+  E --> H["Recherche web et récupération de pages"]
+  F --> I["Générer des réponses, des modifications de code et des enregistrements de session"]
+  G --> I
+  H --> I
+```
+
+### Deutsch
+
+```mermaid
+flowchart TD
+  A["Benutzer öffnet die Desktop-App"] --> B["API-Schlüssel eingeben"]
+  B --> C["Verfügbare Modelle vom Server abrufen"]
+  C --> D["Modell, Inferenzstärke und Berechtigungsmodus wählen"]
+  D --> E["Projektsitzung öffnen"]
+  E --> F["Code lesen / suchen / bearbeiten"]
+  E --> G["Befehle ausführen und Werkzeuge aufrufen"]
+  E --> H["Websuche und Seitenabruf"]
+  F --> I["Antworten, Codeänderungen und Sitzungsaufzeichnungen erzeugen"]
   G --> I
   H --> I
 ```
