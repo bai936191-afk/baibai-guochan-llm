@@ -23,15 +23,15 @@ Los instaladores oficiales se publican en GitHub Releases:
 
 [Descargar la última versión](https://github.com/bai936191-afk/baibai-guochan-llm/releases/latest)
 
-Versión actual: `v0.4.3`
+Versión actual: `v0.4.4`
 
 | SO | Archivo recomendado |
 | --- | --- |
-| Windows x64 | `Baibai-Guochan-LLM-0.4.3-win-x64.exe` |
-| macOS Apple Silicon | `Baibai-Guochan-LLM-0.4.3-mac-arm64.dmg` |
-| macOS Intel | `Baibai-Guochan-LLM-0.4.3-mac-x64.dmg` |
-| Linux x64 | `Baibai-Guochan-LLM-0.4.3-linux-x86_64.AppImage` o `Baibai-Guochan-LLM-0.4.3-linux-amd64.deb` |
-| Linux ARM64 | `Baibai-Guochan-LLM-0.4.3-linux-arm64.AppImage` o `Baibai-Guochan-LLM-0.4.3-linux-arm64.deb` |
+| Windows x64 | `Baibai-Guochan-LLM-0.4.4-win-x64.exe` |
+| macOS Apple Silicon | `Baibai-Guochan-LLM-0.4.4-mac-arm64.dmg` |
+| macOS Intel | `Baibai-Guochan-LLM-0.4.4-mac-x64.dmg` |
+| Linux x64 | `Baibai-Guochan-LLM-0.4.4-linux-x86_64.AppImage` o `Baibai-Guochan-LLM-0.4.4-linux-amd64.deb` |
+| Linux ARM64 | `Baibai-Guochan-LLM-0.4.4-linux-arm64.AppImage` o `Baibai-Guochan-LLM-0.4.4-linux-arm64.deb` |
 
 > La compilación actual no cuenta con firma de código comercial. En Windows y macOS puede aparecer una confirmación de seguridad del sistema en la primera instalación; es un comportamiento normal para instaladores no firmados.
 > Los nombres de archivo de descarga usan ASCII, pero el nombre de la aplicación instalada sigue mostrándose como "白白国产大模型".
@@ -87,7 +87,7 @@ flowchart TD
 
 ### Windows
 
-1. Descarga `Baibai-Guochan-LLM-0.4.3-win-x64.exe`.
+1. Descarga `Baibai-Guochan-LLM-0.4.4-win-x64.exe`.
 2. Doble clic en el instalador para ejecutarlo.
 3. Elige la ruta de instalación y completa la instalación.
 4. Abre el acceso directo del escritorio e ingresa tu clave.
@@ -103,14 +103,14 @@ flowchart TD
 AppImage:
 
 ```bash
-chmod +x Baibai-Guochan-LLM-0.4.3-linux-x86_64.AppImage
-./Baibai-Guochan-LLM-0.4.3-linux-x86_64.AppImage
+chmod +x Baibai-Guochan-LLM-0.4.4-linux-x86_64.AppImage
+./Baibai-Guochan-LLM-0.4.4-linux-x86_64.AppImage
 ```
 
 Debian / Ubuntu:
 
 ```bash
-sudo apt install ./Baibai-Guochan-LLM-0.4.3-linux-amd64.deb
+sudo apt install ./Baibai-Guochan-LLM-0.4.4-linux-amd64.deb
 ```
 
 Para dispositivos ARM64, usa el paquete cuyo nombre contiene `arm64`.

@@ -73,6 +73,41 @@ describe('AgnetCompatTools compatibility inputs', () => {
     expect(AgnetCompatTools.map(tool => tool.name).sort()).toEqual(expected)
   })
 
+  test('all built-in agent tool schemas tolerate harmless extra model arguments', () => {
+    const sampleInputs: Record<string, Record<string, unknown>> = {
+      codebase_search: { query: 'agent tools', path: tmpDir },
+      delete_file: { path: path.join(tmpDir, 'missing.txt') },
+      edit_file: { path: path.join(tmpDir, 'missing.txt'), old_string: '', new_string: '' },
+      glob: { pattern: '**/*.txt', path: tmpDir },
+      grep: { pattern: 'agent', path: tmpDir },
+      http_request: { target_url: 'https://example.com', headers: { count: 1 } },
+      jina_reader: { target_url: 'https://example.com' },
+      list_dir: { target_directory: tmpDir },
+      notes_delete: { note_name: 'note' },
+      notes_list: {},
+      notes_read: { note_name: 'note' },
+      notes_write: { note_name: 'note', body: '' },
+      read_file: { target_file: path.join(tmpDir, 'missing.txt') },
+      run_command: { cmd: 'echo ok' },
+      todo_clear: {},
+      todo_read: {},
+      todo_write: { raw: '[]' },
+      web_fetch: { url: 'https://example.com', prompt: 'summarize' },
+      web_search: { query: 'today hot search', max_results: '8' },
+      write_file: { target_file: path.join(tmpDir, 'empty.txt'), content: '' },
+    }
+
+    for (const tool of AgnetCompatTools) {
+      const parsed = tool.inputSchema.safeParse({
+        ...sampleInputs[tool.name],
+        prompt: 'model may add a prompt field',
+        max_results: '8',
+        target_file: sampleInputs[tool.name]?.target_file,
+      })
+      expect(parsed.success, `${tool.name} should accept compatibility input`).toBe(true)
+    }
+  })
+
   test('web_search accepts numeric arguments emitted as strings', () => {
     const tool = getTool('web_search')
     const parsed = tool.inputSchema.safeParse({
@@ -128,6 +163,79 @@ describe('AgnetCompatTools compatibility inputs', () => {
     })
 
     expect(parsed.success).toBe(true)
+  })
+
+  test('run_command accepts common command aliases and missing command stays soft', async () => {
+    const tool = getTool('run_command')
+    expect(tool.inputSchema.safeParse({
+      cmd: process.platform === 'win32' ? 'Write-Output alias-ok' : 'printf alias-ok',
+      timeout_sec: '5',
+    }).success).toBe(true)
+
+    expect((await callTool(tool, {
+      shell_command: process.platform === 'win32' ? 'Write-Output alias-ok' : 'printf alias-ok',
+      cwd: tmpDir,
+      timeout_sec: '5',
+    })).data).toContain('alias-ok')
+
+    expect((await callTool(tool, {
+      cwd: tmpDir,
+    })).data).toContain('command is required')
+  })
+
+  test('http_request accepts URL aliases and non-string header values', () => {
+    const tool = getTool('http_request')
+    const parsed = tool.inputSchema.safeParse({
+      target_url: 'https://example.com/api',
+      method: 'POST',
+      headers: {
+        'x-count': 3,
+        'x-enabled': true,
+      },
+      json: { ok: true },
+      timeout_sec: '10',
+    })
+
+    expect(parsed.success).toBe(true)
+  })
+
+  test('write_file preserves intentionally empty content', async () => {
+    const file = path.join(tmpDir, 'empty.txt')
+    const result = await callTool(getTool('write_file'), {
+      path: file,
+      content: '',
+    })
+
+    expect(result.data).toContain('0 line')
+    await expect(fs.readFile(file, 'utf8')).resolves.toBe('')
+  })
+
+  test('edit_file returns non-destructive output instead of throwing when context is stale', async () => {
+    const file = path.join(tmpDir, 'stale.txt')
+    await fs.writeFile(file, 'current text\n', 'utf8')
+
+    const result = await callTool(getTool('edit_file'), {
+      path: file,
+      old_string: 'old text',
+      new_string: 'new text',
+    })
+
+    expect(result.data).toContain('not modified')
+    await expect(fs.readFile(file, 'utf8')).resolves.toBe('current text\n')
+  })
+
+  test('edit_file tolerates CRLF/LF differences safely', async () => {
+    const file = path.join(tmpDir, 'line-endings.txt')
+    await fs.writeFile(file, 'alpha\r\nbeta\r\n', 'utf8')
+
+    const result = await callTool(getTool('edit_file'), {
+      path: file,
+      old_string: 'alpha\nbeta',
+      new_string: 'gamma\nbeta',
+    })
+
+    expect(result.data).toContain('line-ending-insensitive')
+    await expect(fs.readFile(file, 'utf8')).resolves.toBe('gamma\nbeta\r\n')
   })
 
   test('todo_write accepts JSON array strings from tool-call arguments', async () => {

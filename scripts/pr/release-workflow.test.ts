@@ -69,10 +69,8 @@ describe('release desktop workflow', () => {
     )?.[0]
 
     expect(collectStep).toContain('*.dmg')
-    // The macOS auto-update zip and blockmaps are not collected: unsigned builds
-    // ship manual downloads only, so the artifact stays the installer + script.
-    expect(collectStep).not.toContain('*.zip')
-    expect(collectStep).not.toContain('*.blockmap')
+    expect(collectStep).toContain('*.zip')
+    expect(collectStep).toContain('*.blockmap')
     expect(collectStep).toContain('*.yml')
     expect(collectStep).toContain('install-macos-unsigned.sh')
     expect(collectStep).toContain('[ "${{ matrix.smoke_platform }}" = "macos" ]')
@@ -96,9 +94,9 @@ describe('release desktop workflow', () => {
 
     expect(desktopPackage.description).toBeTruthy()
     expect(desktopPackage.homepage).toBe('https://github.com/NanmiCoder/cc-haha')
-    expect(desktopPackage.author?.name).toBe('NanmiCoder')
-    expect(desktopPackage.author?.email).toBe('relakkes@gmail.com')
-    expect(desktopPackage.build?.linux?.maintainer).toBe('NanmiCoder <relakkes@gmail.com>')
+    expect(desktopPackage.author?.name).toBe('bai936191-afk')
+    expect(desktopPackage.author?.email).toBeUndefined()
+    expect(desktopPackage.build?.linux?.maintainer).toBe('bai936191-afk')
   })
 
   test('release workflow requires macOS Gatekeeper launch approval for signed builds', () => {
@@ -159,7 +157,7 @@ describe('release desktop workflow', () => {
     expect(signedBuildStep).toContain('xcrun stapler staple "$app_path"')
     expect(signedBuildStep).toContain('xcrun stapler validate "$app_path"')
     expect(signedBuildStep).toContain('spctl -a -vv -t execute "$app_path"')
-    expect(signedBuildStep).toContain('app_path="build-artifacts/electron/${{ matrix.app_bundle_dir }}/Claude Code Haha.app"')
+    expect(signedBuildStep).toContain('app_path="build-artifacts/electron/${{ matrix.app_bundle_dir }}/白白国产大模型.app"')
     expect(signedBuildStep).toContain('package_args=( ${{ matrix.builder_args }} --prepackaged "$app_path" --publish never -c.mac.notarize=false )')
     expect(signedBuildStep).toContain('find build-artifacts/electron -maxdepth 1 -type f -delete')
     expect(signedBuildStep).toContain('Signed electron-builder timed out')
@@ -227,7 +225,7 @@ describe('release desktop workflow', () => {
       /missing=\(\)[\s\S]*?# Windows signing is optional:/,
     )?.[0]
     const windowsOptionalBlock = signingJob?.match(
-      /win_missing=\(\)[\s\S]*?fi\n/,
+      /win_missing=\(\)[\s\S]*?fi\r?\n/,
     )?.[0]
     expect(macRequiredBlock).not.toContain('exit 1')
     expect(windowsOptionalBlock).toContain('::warning::')
@@ -302,23 +300,23 @@ describe('release desktop workflow', () => {
       }
     }
     const version = desktopPackage.version
-    expect(desktopPackage.build.artifactName).toBe('Claude-Code-Haha-${version}-${os}-${arch}.${ext}')
+    expect(desktopPackage.build.artifactName).toBe('Baibai-Guochan-LLM-${version}-${os}-${arch}.${ext}')
 
     const expectedReleaseAssets = [
-      `Claude-Code-Haha-${version}-mac-arm64.dmg`,
-      `Claude-Code-Haha-${version}-mac-arm64.dmg.blockmap`,
-      `Claude-Code-Haha-${version}-mac-arm64.zip`,
-      `Claude-Code-Haha-${version}-mac-arm64.zip.blockmap`,
-      `Claude-Code-Haha-${version}-mac-x64.dmg`,
-      `Claude-Code-Haha-${version}-mac-x64.dmg.blockmap`,
-      `Claude-Code-Haha-${version}-mac-x64.zip`,
-      `Claude-Code-Haha-${version}-mac-x64.zip.blockmap`,
-      `Claude-Code-Haha-${version}-linux-x86_64.AppImage`,
-      `Claude-Code-Haha-${version}-linux-amd64.deb`,
-      `Claude-Code-Haha-${version}-linux-arm64.AppImage`,
-      `Claude-Code-Haha-${version}-linux-arm64.deb`,
-      `Claude-Code-Haha-${version}-win-x64.exe`,
-      `Claude-Code-Haha-${version}-win-x64.exe.blockmap`,
+      `Baibai-Guochan-LLM-${version}-mac-arm64.dmg`,
+      `Baibai-Guochan-LLM-${version}-mac-arm64.dmg.blockmap`,
+      `Baibai-Guochan-LLM-${version}-mac-arm64.zip`,
+      `Baibai-Guochan-LLM-${version}-mac-arm64.zip.blockmap`,
+      `Baibai-Guochan-LLM-${version}-mac-x64.dmg`,
+      `Baibai-Guochan-LLM-${version}-mac-x64.dmg.blockmap`,
+      `Baibai-Guochan-LLM-${version}-mac-x64.zip`,
+      `Baibai-Guochan-LLM-${version}-mac-x64.zip.blockmap`,
+      `Baibai-Guochan-LLM-${version}-linux-x86_64.AppImage`,
+      `Baibai-Guochan-LLM-${version}-linux-amd64.deb`,
+      `Baibai-Guochan-LLM-${version}-linux-arm64.AppImage`,
+      `Baibai-Guochan-LLM-${version}-linux-arm64.deb`,
+      `Baibai-Guochan-LLM-${version}-win-x64.exe`,
+      `Baibai-Guochan-LLM-${version}-win-x64.exe.blockmap`,
     ]
     const namespacedMetadata = [
       'latest-mac-macOS-ARM64.yml',
@@ -362,15 +360,15 @@ describe('release desktop workflow', () => {
     const buildJob = extractJob(workflow, 'build')
     const publishJob = extractJob(workflow, 'publish-release')
     const expectedFiles = [
-      'Claude-Code-Haha-${APP_VERSION}-mac-arm64.dmg',
-      'Claude-Code-Haha-${APP_VERSION}-mac-arm64.zip',
-      'Claude-Code-Haha-${APP_VERSION}-mac-x64.dmg',
-      'Claude-Code-Haha-${APP_VERSION}-mac-x64.zip',
-      'Claude-Code-Haha-${APP_VERSION}-linux-x86_64.AppImage',
-      'Claude-Code-Haha-${APP_VERSION}-linux-amd64.deb',
-      'Claude-Code-Haha-${APP_VERSION}-linux-arm64.AppImage',
-      'Claude-Code-Haha-${APP_VERSION}-linux-arm64.deb',
-      'Claude-Code-Haha-${APP_VERSION}-win-x64.exe',
+      'Baibai-Guochan-LLM-${APP_VERSION}-mac-arm64.dmg',
+      'Baibai-Guochan-LLM-${APP_VERSION}-mac-arm64.zip',
+      'Baibai-Guochan-LLM-${APP_VERSION}-mac-x64.dmg',
+      'Baibai-Guochan-LLM-${APP_VERSION}-mac-x64.zip',
+      'Baibai-Guochan-LLM-${APP_VERSION}-linux-x86_64.AppImage',
+      'Baibai-Guochan-LLM-${APP_VERSION}-linux-amd64.deb',
+      'Baibai-Guochan-LLM-${APP_VERSION}-linux-arm64.AppImage',
+      'Baibai-Guochan-LLM-${APP_VERSION}-linux-arm64.deb',
+      'Baibai-Guochan-LLM-${APP_VERSION}-win-x64.exe',
     ]
 
     for (const file of expectedFiles) {
@@ -402,8 +400,8 @@ describe('release desktop workflow', () => {
     expect(desktopPackage.build.publish).toEqual([
       {
         provider: 'github',
-        owner: 'NanmiCoder',
-        repo: 'cc-haha',
+        owner: 'bai936191-afk',
+        repo: 'baibai-guochan-llm',
       },
     ])
     expect(desktopPackage.build.mac?.publish).toBeUndefined()

@@ -23,15 +23,15 @@
 
 [최신 버전 다운로드](https://github.com/bai936191-afk/baibai-guochan-llm/releases/latest)
 
-현재 버전: `v0.4.3`
+현재 버전: `v0.4.4`
 
 | OS | 추천 파일 |
 | --- | --- |
-| Windows x64 | `Baibai-Guochan-LLM-0.4.3-win-x64.exe` |
-| macOS Apple Silicon | `Baibai-Guochan-LLM-0.4.3-mac-arm64.dmg` |
-| macOS Intel | `Baibai-Guochan-LLM-0.4.3-mac-x64.dmg` |
-| Linux x64 | `Baibai-Guochan-LLM-0.4.3-linux-x86_64.AppImage` 또는 `Baibai-Guochan-LLM-0.4.3-linux-amd64.deb` |
-| Linux ARM64 | `Baibai-Guochan-LLM-0.4.3-linux-arm64.AppImage` 또는 `Baibai-Guochan-LLM-0.4.3-linux-arm64.deb` |
+| Windows x64 | `Baibai-Guochan-LLM-0.4.4-win-x64.exe` |
+| macOS Apple Silicon | `Baibai-Guochan-LLM-0.4.4-mac-arm64.dmg` |
+| macOS Intel | `Baibai-Guochan-LLM-0.4.4-mac-x64.dmg` |
+| Linux x64 | `Baibai-Guochan-LLM-0.4.4-linux-x86_64.AppImage` 또는 `Baibai-Guochan-LLM-0.4.4-linux-amd64.deb` |
+| Linux ARM64 | `Baibai-Guochan-LLM-0.4.4-linux-arm64.AppImage` 또는 `Baibai-Guochan-LLM-0.4.4-linux-arm64.deb` |
 
 > 현재 빌드는 상용 코드 서명 인증서가 설정되어 있지 않습니다. Windows와 macOS는 첫 설치 시 시스템 보안 확인이 나타날 수 있으며, 이는 미서명 설치 패키지의 정상적인 동작입니다.
 > 다운로드 파일명은 ASCII를 사용하지만, 설치 후 앱 이름은 여전히 "白白国产大模型"으로 표시됩니다.
@@ -87,7 +87,7 @@ flowchart TD
 
 ### Windows
 
-1. `Baibai-Guochan-LLM-0.4.3-win-x64.exe`를 다운로드.
+1. `Baibai-Guochan-LLM-0.4.4-win-x64.exe`를 다운로드.
 2. 설치 프로그램을 더블클릭하여 실행.
 3. 설치 경로를 선택하고 설치 완료.
 4. 데스크톱 바로가기를 열고 키 입력.
@@ -103,14 +103,14 @@ flowchart TD
 AppImage:
 
 ```bash
-chmod +x Baibai-Guochan-LLM-0.4.3-linux-x86_64.AppImage
-./Baibai-Guochan-LLM-0.4.3-linux-x86_64.AppImage
+chmod +x Baibai-Guochan-LLM-0.4.4-linux-x86_64.AppImage
+./Baibai-Guochan-LLM-0.4.4-linux-x86_64.AppImage
 ```
 
 Debian / Ubuntu:
 
 ```bash
-sudo apt install ./Baibai-Guochan-LLM-0.4.3-linux-amd64.deb
+sudo apt install ./Baibai-Guochan-LLM-0.4.4-linux-amd64.deb
 ```
 
 ARM64 기기에서는 파일명에 `arm64`가 포함된 패키지를 사용하세요.

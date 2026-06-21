@@ -23,15 +23,15 @@ Official installers are hosted on GitHub Releases:
 
 [Download the latest version](https://github.com/bai936191-afk/baibai-guochan-llm/releases/latest)
 
-Current version: `v0.4.3`
+Current version: `v0.4.4`
 
 | OS | Recommended file |
 | --- | --- |
-| Windows x64 | `Baibai-Guochan-LLM-0.4.3-win-x64.exe` |
-| macOS Apple Silicon | `Baibai-Guochan-LLM-0.4.3-mac-arm64.dmg` |
-| macOS Intel | `Baibai-Guochan-LLM-0.4.3-mac-x64.dmg` |
-| Linux x64 | `Baibai-Guochan-LLM-0.4.3-linux-x86_64.AppImage` or `Baibai-Guochan-LLM-0.4.3-linux-amd64.deb` |
-| Linux ARM64 | `Baibai-Guochan-LLM-0.4.3-linux-arm64.AppImage` or `Baibai-Guochan-LLM-0.4.3-linux-arm64.deb` |
+| Windows x64 | `Baibai-Guochan-LLM-0.4.4-win-x64.exe` |
+| macOS Apple Silicon | `Baibai-Guochan-LLM-0.4.4-mac-arm64.dmg` |
+| macOS Intel | `Baibai-Guochan-LLM-0.4.4-mac-x64.dmg` |
+| Linux x64 | `Baibai-Guochan-LLM-0.4.4-linux-x86_64.AppImage` or `Baibai-Guochan-LLM-0.4.4-linux-amd64.deb` |
+| Linux ARM64 | `Baibai-Guochan-LLM-0.4.4-linux-arm64.AppImage` or `Baibai-Guochan-LLM-0.4.4-linux-arm64.deb` |
 
 > The current build is not signed with a commercial code-signing certificate. Windows and macOS may show a security confirmation on first install — this is normal for unsigned installers.
 > Download filenames use ASCII, but the installed app name still displays as "白白国产大模型".
@@ -87,7 +87,7 @@ flowchart TD
 
 ### Windows
 
-1. Download `Baibai-Guochan-LLM-0.4.3-win-x64.exe`.
+1. Download `Baibai-Guochan-LLM-0.4.4-win-x64.exe`.
 2. Double-click the installer.
 3. Choose the install path and finish installation.
 4. Open the desktop shortcut and enter your key.
@@ -103,14 +103,14 @@ flowchart TD
 AppImage:
 
 ```bash
-chmod +x Baibai-Guochan-LLM-0.4.3-linux-x86_64.AppImage
-./Baibai-Guochan-LLM-0.4.3-linux-x86_64.AppImage
+chmod +x Baibai-Guochan-LLM-0.4.4-linux-x86_64.AppImage
+./Baibai-Guochan-LLM-0.4.4-linux-x86_64.AppImage
 ```
 
 Debian / Ubuntu:
 
 ```bash
-sudo apt install ./Baibai-Guochan-LLM-0.4.3-linux-amd64.deb
+sudo apt install ./Baibai-Guochan-LLM-0.4.4-linux-amd64.deb
 ```
 
 For ARM64 devices, use the package whose filename contains `arm64`.

@@ -330,7 +330,7 @@ jobs:
             exit 0
           fi
 
-          app_path="build-artifacts/electron/${{ matrix.app_bundle_dir }}/Claude Code Haha.app"
+          app_path="build-artifacts/electron/${{ matrix.app_bundle_dir }}/白白国产大模型.app"
           set +e
           notarize_app_bundle "$app_path"
           status=$?
@@ -384,40 +384,40 @@ jobs:
           case "${{ matrix.label }}" in
             macOS-ARM64)
               expected=(
-                "Claude-Code-Haha-${APP_VERSION}-mac-arm64.dmg"
-                "Claude-Code-Haha-${APP_VERSION}-mac-arm64.dmg.blockmap"
-                "Claude-Code-Haha-${APP_VERSION}-mac-arm64.zip"
-                "Claude-Code-Haha-${APP_VERSION}-mac-arm64.zip.blockmap"
+                "Baibai-Guochan-LLM-${APP_VERSION}-mac-arm64.dmg"
+                "Baibai-Guochan-LLM-${APP_VERSION}-mac-arm64.dmg.blockmap"
+                "Baibai-Guochan-LLM-${APP_VERSION}-mac-arm64.zip"
+                "Baibai-Guochan-LLM-${APP_VERSION}-mac-arm64.zip.blockmap"
                 "latest-mac.yml"
               )
               ;;
             macOS-x64)
               expected=(
-                "Claude-Code-Haha-${APP_VERSION}-mac-x64.dmg"
-                "Claude-Code-Haha-${APP_VERSION}-mac-x64.dmg.blockmap"
-                "Claude-Code-Haha-${APP_VERSION}-mac-x64.zip"
-                "Claude-Code-Haha-${APP_VERSION}-mac-x64.zip.blockmap"
+                "Baibai-Guochan-LLM-${APP_VERSION}-mac-x64.dmg"
+                "Baibai-Guochan-LLM-${APP_VERSION}-mac-x64.dmg.blockmap"
+                "Baibai-Guochan-LLM-${APP_VERSION}-mac-x64.zip"
+                "Baibai-Guochan-LLM-${APP_VERSION}-mac-x64.zip.blockmap"
                 "latest-mac.yml"
               )
               ;;
             Linux-x64)
               expected=(
-                "Claude-Code-Haha-${APP_VERSION}-linux-x86_64.AppImage"
-                "Claude-Code-Haha-${APP_VERSION}-linux-amd64.deb"
+                "Baibai-Guochan-LLM-${APP_VERSION}-linux-x86_64.AppImage"
+                "Baibai-Guochan-LLM-${APP_VERSION}-linux-amd64.deb"
                 "latest-linux.yml"
               )
               ;;
             Linux-ARM64)
               expected=(
-                "Claude-Code-Haha-${APP_VERSION}-linux-arm64.AppImage"
-                "Claude-Code-Haha-${APP_VERSION}-linux-arm64.deb"
+                "Baibai-Guochan-LLM-${APP_VERSION}-linux-arm64.AppImage"
+                "Baibai-Guochan-LLM-${APP_VERSION}-linux-arm64.deb"
                 "latest-linux-arm64.yml"
               )
               ;;
             Windows-x64)
               expected=(
-                "Claude-Code-Haha-${APP_VERSION}-win-x64.exe"
-                "Claude-Code-Haha-${APP_VERSION}-win-x64.exe.blockmap"
+                "Baibai-Guochan-LLM-${APP_VERSION}-win-x64.exe"
+                "Baibai-Guochan-LLM-${APP_VERSION}-win-x64.exe.blockmap"
                 "latest.yml"
               )
               ;;
@@ -528,20 +528,20 @@ jobs:
           APP_VERSION: ${{ steps.version.outputs.value }}
         run: |
           expected=(
-            "Claude-Code-Haha-${APP_VERSION}-mac-arm64.dmg"
-            "Claude-Code-Haha-${APP_VERSION}-mac-arm64.dmg.blockmap"
-            "Claude-Code-Haha-${APP_VERSION}-mac-arm64.zip"
-            "Claude-Code-Haha-${APP_VERSION}-mac-arm64.zip.blockmap"
-            "Claude-Code-Haha-${APP_VERSION}-mac-x64.dmg"
-            "Claude-Code-Haha-${APP_VERSION}-mac-x64.dmg.blockmap"
-            "Claude-Code-Haha-${APP_VERSION}-mac-x64.zip"
-            "Claude-Code-Haha-${APP_VERSION}-mac-x64.zip.blockmap"
-            "Claude-Code-Haha-${APP_VERSION}-linux-x86_64.AppImage"
-            "Claude-Code-Haha-${APP_VERSION}-linux-amd64.deb"
-            "Claude-Code-Haha-${APP_VERSION}-linux-arm64.AppImage"
-            "Claude-Code-Haha-${APP_VERSION}-linux-arm64.deb"
-            "Claude-Code-Haha-${APP_VERSION}-win-x64.exe"
-            "Claude-Code-Haha-${APP_VERSION}-win-x64.exe.blockmap"
+            "Baibai-Guochan-LLM-${APP_VERSION}-mac-arm64.dmg"
+            "Baibai-Guochan-LLM-${APP_VERSION}-mac-arm64.dmg.blockmap"
+            "Baibai-Guochan-LLM-${APP_VERSION}-mac-arm64.zip"
+            "Baibai-Guochan-LLM-${APP_VERSION}-mac-arm64.zip.blockmap"
+            "Baibai-Guochan-LLM-${APP_VERSION}-mac-x64.dmg"
+            "Baibai-Guochan-LLM-${APP_VERSION}-mac-x64.dmg.blockmap"
+            "Baibai-Guochan-LLM-${APP_VERSION}-mac-x64.zip"
+            "Baibai-Guochan-LLM-${APP_VERSION}-mac-x64.zip.blockmap"
+            "Baibai-Guochan-LLM-${APP_VERSION}-linux-x86_64.AppImage"
+            "Baibai-Guochan-LLM-${APP_VERSION}-linux-amd64.deb"
+            "Baibai-Guochan-LLM-${APP_VERSION}-linux-arm64.AppImage"
+            "Baibai-Guochan-LLM-${APP_VERSION}-linux-arm64.deb"
+            "Baibai-Guochan-LLM-${APP_VERSION}-win-x64.exe"
+            "Baibai-Guochan-LLM-${APP_VERSION}-win-x64.exe.blockmap"
           )
 
           missing=()
@@ -585,7 +585,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.value }}
-          name: Claude Code Haha v${{ steps.version.outputs.value }}
+          name: 白白国产大模型 v${{ steps.version.outputs.value }}
           body: ${{ steps.release_notes.outputs.body }}
           draft: ${{ github.event_name == 'workflow_dispatch' && inputs.draft == true }}
           prerelease: false

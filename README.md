@@ -23,15 +23,15 @@
 
 [下载最新版本](https://github.com/bai936191-afk/baibai-guochan-llm/releases/latest)
 
-当前版本：`v0.4.3`
+当前版本：`v0.4.4`
 
 | 系统 | 推荐文件 |
 | --- | --- |
-| Windows x64 | `Baibai-Guochan-LLM-0.4.3-win-x64.exe` |
-| macOS Apple Silicon | `Baibai-Guochan-LLM-0.4.3-mac-arm64.dmg` |
-| macOS Intel | `Baibai-Guochan-LLM-0.4.3-mac-x64.dmg` |
-| Linux x64 | `Baibai-Guochan-LLM-0.4.3-linux-x86_64.AppImage` 或 `Baibai-Guochan-LLM-0.4.3-linux-amd64.deb` |
-| Linux ARM64 | `Baibai-Guochan-LLM-0.4.3-linux-arm64.AppImage` 或 `Baibai-Guochan-LLM-0.4.3-linux-arm64.deb` |
+| Windows x64 | `Baibai-Guochan-LLM-0.4.4-win-x64.exe` |
+| macOS Apple Silicon | `Baibai-Guochan-LLM-0.4.4-mac-arm64.dmg` |
+| macOS Intel | `Baibai-Guochan-LLM-0.4.4-mac-x64.dmg` |
+| Linux x64 | `Baibai-Guochan-LLM-0.4.4-linux-x86_64.AppImage` 或 `Baibai-Guochan-LLM-0.4.4-linux-amd64.deb` |
+| Linux ARM64 | `Baibai-Guochan-LLM-0.4.4-linux-arm64.AppImage` 或 `Baibai-Guochan-LLM-0.4.4-linux-arm64.deb` |
 
 > 当前构建未配置商业代码签名。Windows 和 macOS 首次安装时可能出现系统安全确认，这是未签名安装包的正常提示。
 > 下载文件名使用 ASCII，安装后的应用名称仍显示为“白白国产大模型”。
@@ -87,7 +87,7 @@ flowchart TD
 
 ### Windows
 
-1. 下载 `Baibai-Guochan-LLM-0.4.3-win-x64.exe`。
+1. 下载 `Baibai-Guochan-LLM-0.4.4-win-x64.exe`。
 2. 双击运行安装程序。
 3. 选择安装路径，完成安装。
 4. 打开桌面快捷方式，输入密钥。
@@ -103,14 +103,14 @@ flowchart TD
 AppImage：
 
 ```bash
-chmod +x Baibai-Guochan-LLM-0.4.3-linux-x86_64.AppImage
-./Baibai-Guochan-LLM-0.4.3-linux-x86_64.AppImage
+chmod +x Baibai-Guochan-LLM-0.4.4-linux-x86_64.AppImage
+./Baibai-Guochan-LLM-0.4.4-linux-x86_64.AppImage
 ```
 
 Debian / Ubuntu：
 
 ```bash
-sudo apt install ./Baibai-Guochan-LLM-0.4.3-linux-amd64.deb
+sudo apt install ./Baibai-Guochan-LLM-0.4.4-linux-amd64.deb
 ```
 
 ARM64 设备请使用文件名里带 `arm64` 的包。

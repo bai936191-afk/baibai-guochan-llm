@@ -136,6 +136,59 @@ export const HOOK_TIMING_DISPLAY_THRESHOLD_MS = 500
  * BashTool's PROGRESS_THRESHOLD_MS — the collapsed view feels stuck past this. */
 const SLOW_PHASE_LOG_THRESHOLD_MS = 2000
 
+const AGNET_COMPAT_SOFT_TOOLS = new Set([
+  'read_file',
+  'write_file',
+  'edit_file',
+  'delete_file',
+  'list_dir',
+  'grep',
+  'glob',
+  'glob_path',
+  'codebase_search',
+  'run_command',
+  'web_fetch',
+  'web_search',
+  'jina_reader',
+  'http_request',
+  'todo_write',
+  'todo_read',
+  'todo_clear',
+  'notes_write',
+  'notes_read',
+  'notes_list',
+  'notes_delete',
+])
+
+function isAgnetCompatSoftTool(tool: Tool): boolean {
+  return AGNET_COMPAT_SOFT_TOOLS.has(tool.name)
+}
+
+function createSoftToolInputResult(
+  tool: Tool,
+  toolUseID: string,
+  assistantMessage: AssistantMessage,
+  message: string,
+): MessageUpdateLazy[] {
+  const content = `${tool.name} 参数不完整或格式不兼容：${message}\n工具未执行，请调整参数后重试。`
+  return [
+    {
+      message: createUserMessage({
+        content: [
+          {
+            type: 'tool_result',
+            content,
+            is_error: false,
+            tool_use_id: toolUseID,
+          },
+        ],
+        toolUseResult: content,
+        sourceToolAssistantUUID: assistantMessage.uuid,
+      }),
+    },
+  ]
+}
+
 /**
  * Classify a tool execution error into a telemetry-safe string.
  *
@@ -614,6 +667,15 @@ async function checkPermissionsAndCallTool(
   // Validate input types with zod (surprisingly, the model is not great at generating valid input)
   const parsedInput = tool.inputSchema.safeParse(input)
   if (!parsedInput.success) {
+    if (isAgnetCompatSoftTool(tool)) {
+      return createSoftToolInputResult(
+        tool,
+        toolUseID,
+        assistantMessage,
+        formatZodValidationError(tool.name, parsedInput.error),
+      )
+    }
+
     let errorContent = formatZodValidationError(tool.name, parsedInput.error)
 
     const schemaHint = buildSchemaNotSentHint(
@@ -685,6 +747,15 @@ async function checkPermissionsAndCallTool(
     toolUseContext,
   )
   if (isValidCall?.result === false) {
+    if (isAgnetCompatSoftTool(tool)) {
+      return createSoftToolInputResult(
+        tool,
+        toolUseID,
+        assistantMessage,
+        isValidCall.message,
+      )
+    }
+
     logForDebugging(
       `${tool.name} tool validation error: ${isValidCall.message?.slice(0, 200)}`,
     )

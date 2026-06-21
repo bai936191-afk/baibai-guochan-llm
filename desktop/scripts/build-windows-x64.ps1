@@ -108,6 +108,17 @@ if ($env:SKIP_INSTALL -ne '1') {
   } finally {
     Pop-Location
   }
+
+  Write-Step 'Installing adapter dependencies...'
+  Push-Location (Join-Path $repoRoot 'adapters')
+  try {
+    & bun install
+    if ($LASTEXITCODE -ne 0) {
+      throw "[build-windows-x64] bun install failed in adapters (exit $LASTEXITCODE)"
+    }
+  } finally {
+    Pop-Location
+  }
 }
 
 Write-Step 'Cleaning stale Electron outputs...'

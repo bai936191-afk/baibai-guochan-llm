@@ -3,7 +3,7 @@ import * as fs from 'fs/promises'
 import * as os from 'os'
 import * as path from 'path'
 import { z } from 'zod/v4'
-import { buildTool, type ToolDef, type Tool } from '../../Tool.js'
+import { buildTool, type ToolDef, type Tool, type ToolResult } from '../../Tool.js'
 import type { ToolProgressData } from '../../types/tools.js'
 import type { PermissionResult } from '../../types/permissions.js'
 import { getCwd } from '../../utils/cwd.js'
@@ -88,6 +88,13 @@ function baseTool<
       }
     },
     ...def,
+    async call(input, context, canUseTool, parentMessage, onProgress) {
+      try {
+        return await def.call(input, context, canUseTool, parentMessage, onProgress)
+      } catch (error) {
+        return softFailure(def.name, error)
+      }
+    },
   }) as Tool<Input, TextOutput, P>
 }
 
@@ -195,6 +202,114 @@ function pickString(input: Record<string, unknown>, ...keys: string[]): string {
     if (typeof value === 'string' && value.trim()) return value
   }
   return ''
+}
+
+function pickRawString(input: Record<string, unknown>, ...keys: string[]): string {
+  for (const key of keys) {
+    const value = input[key]
+    if (typeof value === 'string') return value
+  }
+  return ''
+}
+
+function hasStringField(input: Record<string, unknown>, ...keys: string[]): boolean {
+  return keys.some(key => typeof input[key] === 'string')
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function normalizeLineEndings(value: string): string {
+  return value.replace(/\r\n?/g, '\n')
+}
+
+function buildLineEndingIndexMap(value: string): { normalized: string; map: number[] } {
+  let normalized = ''
+  const map: number[] = []
+
+  for (let index = 0; index < value.length; index += 1) {
+    const char = value[index]
+    if (char === '\r') {
+      normalized += '\n'
+      map.push(index)
+      if (value[index + 1] === '\n') index += 1
+      continue
+    }
+
+    normalized += char
+    map.push(index)
+  }
+
+  return { normalized, map }
+}
+
+function findLineEndingInsensitiveRanges(
+  original: string,
+  oldString: string,
+): Array<{ start: number; end: number }> {
+  const { normalized, map } = buildLineEndingIndexMap(original)
+  const needle = normalizeLineEndings(oldString)
+  if (!needle) return []
+
+  const ranges: Array<{ start: number; end: number }> = []
+  let from = 0
+  while (from <= normalized.length) {
+    const index = normalized.indexOf(needle, from)
+    if (index === -1) break
+    const normalizedEnd = index + needle.length
+    ranges.push({
+      start: map[index] ?? original.length,
+      end: normalizedEnd >= normalized.length ? original.length : (map[normalizedEnd] ?? original.length),
+    })
+    from = index + Math.max(needle.length, 1)
+  }
+  return ranges
+}
+
+function findWhitespaceFlexibleRanges(
+  original: string,
+  oldString: string,
+): Array<{ start: number; end: number }> {
+  const normalizedOld = normalizeLineEndings(oldString)
+  if (normalizedOld.trim().length < 8) return []
+  const pattern = normalizedOld
+    .split(/(\s+)/)
+    .map(part => /\s+/.test(part) ? '\\s+' : escapeRegExp(part))
+    .join('')
+  if (!pattern) return []
+
+  const regex = new RegExp(pattern, 'g')
+  const ranges: Array<{ start: number; end: number }> = []
+  for (const match of original.matchAll(regex)) {
+    if (match.index === undefined) continue
+    ranges.push({ start: match.index, end: match.index + match[0].length })
+  }
+  return ranges
+}
+
+function replaceRanges(
+  original: string,
+  ranges: Array<{ start: number; end: number }>,
+  newString: string,
+  replaceAll: boolean,
+): { updated: string; replacements: number } | null {
+  if (ranges.length === 0) return null
+  if (ranges.length > 1 && !replaceAll) return null
+
+  const selected = replaceAll ? ranges : ranges.slice(0, 1)
+  let updated = original
+  for (const range of [...selected].sort((a, b) => b.start - a.start)) {
+    updated = `${updated.slice(0, range.start)}${newString}${updated.slice(range.end)}`
+  }
+  return { updated, replacements: selected.length }
+}
+
+function softFailure(toolName: string, error: unknown): ToolResult<TextOutput> {
+  const message = error instanceof Error ? error.message : String(error)
+  return {
+    data: `${toolName} 未完成：${message}\n可以调整参数后重试。`,
+  }
 }
 
 const pathKeys = [
@@ -391,7 +506,7 @@ function noteNameFrom(input: Record<string, unknown>): string {
 }
 
 function noteContentFrom(input: Record<string, unknown>): string {
-  return pickString(input, 'content', 'text', 'body')
+  return pickRawString(input, 'content', 'text', 'body')
 }
 
 function requestUrlFrom(input: Record<string, unknown>): string {
@@ -400,6 +515,19 @@ function requestUrlFrom(input: Record<string, unknown>): string {
 
 function httpMethodFrom(input: Record<string, unknown>): string {
   return pickString(input, 'method', 'http_method', 'httpMethod') || 'GET'
+}
+
+function commandFrom(input: Record<string, unknown>): string {
+  return pickString(input, 'command', 'cmd', 'shell_command', 'shellCommand')
+}
+
+function stringHeadersFrom(value: unknown): Record<string, string> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .filter(([key, headerValue]) => key.trim() && headerValue !== undefined && headerValue !== null)
+      .map(([key, headerValue]) => [key, String(headerValue)]),
+  )
 }
 
 function stringBodyFrom(value: unknown): string | undefined {
@@ -546,7 +674,10 @@ const codebaseSearchSchema = z.object({
 })
 
 const runCommandSchema = z.object({
-  command: z.string().describe('Shell command to execute'),
+  command: z.string().optional().describe('Shell command to execute'),
+  cmd: z.string().optional().describe('Alias for command'),
+  shell_command: z.string().optional().describe('Alias for command'),
+  shellCommand: z.string().optional().describe('Alias for command'),
   working_directory: z.string().optional(),
   workingDirectory: z.string().optional(),
   cwd: z.string().optional(),
@@ -588,10 +719,13 @@ const jinaReaderSchema = z.object({
 
 const httpRequestSchema = z.object({
   method: z.string().optional(),
-  url: z.string().url(),
+  url: z.string().url().optional(),
+  uri: z.string().url().optional(),
+  target_url: z.string().url().optional(),
+  targetUrl: z.string().url().optional(),
   body: requestBodyLike.optional(),
   json: z.record(z.string(), z.unknown()).optional(),
-  headers: z.record(z.string(), z.string()).optional(),
+  headers: z.record(z.string(), z.unknown()).optional(),
   content_type: z.string().optional(),
   contentType: z.string().optional(),
   accept: z.string().optional(),
@@ -649,6 +783,7 @@ const notesWriteSchema = z.object({
   title: z.string().optional(),
   content: z.string().optional(),
   text: z.string().optional(),
+  body: z.string().optional(),
 })
 
 const readFileTool = baseTool({
@@ -703,11 +838,17 @@ const writeFileTool = baseTool({
   },
   async call(input) {
     const target = await resolveWorkPath(pickPath(input), { targetMayNotExist: true })
-    const content = pickString(input, 'content', 'contents', 'text')
+    const content = pickRawString(input, 'content', 'contents', 'text')
     const oldContent = await fs.readFile(target, 'utf8').catch(() => null)
     await fs.mkdir(path.dirname(target), { recursive: true })
     await fs.writeFile(target, content, 'utf8')
-    return { data: oldContent === null ? `created ${target}` : `updated ${target}` }
+    const byteLength = Buffer.byteLength(content, 'utf8')
+    const lineCount = content.length === 0 ? 0 : content.split(/\r?\n/).length
+    return {
+      data: oldContent === null
+        ? `created ${target}; ${lineCount} line(s), ${byteLength} byte(s)`
+        : `updated ${target}; ${lineCount} line(s), ${byteLength} byte(s)`,
+    }
   },
 })
 
@@ -721,30 +862,76 @@ const editFileTool = baseTool({
     return `Edit ${pickPath(input) || 'a file'}`
   },
   async prompt() {
-    return 'Replace exact string occurrences in a file. Fails if old_string is not found, or found multiple times without replace_all=true. Does nothing if old_string equals new_string.'
+    return 'Replace text occurrences in a file. Tries exact matching first, then safe CRLF/LF and whitespace-tolerant matching. If no safe unique match is found, returns a non-destructive result instead of editing the file.'
   },
   async validateInput(input) {
     if (!pickPath(input)) return { result: false, message: 'path is required', errorCode: 1 }
-    if (!pickString(input, 'old_string', 'oldString', 'old', 'search')) return { result: false, message: 'old_string is required', errorCode: 2 }
+    if (!hasStringField(input, 'old_string', 'oldString', 'old', 'search')) return { result: false, message: 'old_string is required', errorCode: 2 }
     return { result: true }
   },
   async call(input) {
     const target = await resolveWorkPath(pickPath(input))
-    const oldString = pickString(input, 'old_string', 'oldString', 'old', 'search')
-    const newString = pickString(input, 'new_string', 'newString', 'new', 'replacement')
+    const oldString = pickRawString(input, 'old_string', 'oldString', 'old', 'search')
+    const newString = pickRawString(input, 'new_string', 'newString', 'new', 'replacement')
     if (oldString === newString) return { data: 'old_string equals new_string; nothing to do' }
     const original = await fs.readFile(target, 'utf8')
     const count = original.split(oldString).length - 1
     const replaceAll = asBoolean(input.replace_all ?? input.replaceAll, false)
-    if (count === 0) throw new Error(`old_string not found in ${target}`)
+
     if (count > 1 && !replaceAll) {
-      throw new Error(`old_string found ${count} times in ${target}; pass replace_all=true or add more surrounding context`)
+      return {
+        data: `not modified ${target}; old_string matched ${count} times. Add more surrounding context or pass replace_all=true.`,
+      }
     }
-    const updated = replaceAll
-      ? original.split(oldString).join(newString)
-      : original.replace(oldString, newString)
+
+    let updated: string | null = null
+    let replacements = 0
+    let matchMode = 'exact'
+
+    if (count > 0) {
+      updated = replaceAll
+        ? original.split(oldString).join(newString)
+        : original.replace(oldString, newString)
+      replacements = replaceAll ? count : 1
+    } else {
+      if (newString && original.includes(newString)) {
+        return { data: `not modified ${target}; target already contains new_string` }
+      }
+
+      const lineEndingMatch = replaceRanges(
+        original,
+        findLineEndingInsensitiveRanges(original, oldString),
+        newString,
+        replaceAll,
+      )
+      if (lineEndingMatch) {
+        updated = lineEndingMatch.updated
+        replacements = lineEndingMatch.replacements
+        matchMode = 'line-ending-insensitive'
+      } else {
+        const whitespaceMatch = replaceRanges(
+          original,
+          findWhitespaceFlexibleRanges(original, oldString),
+          newString,
+          replaceAll,
+        )
+        if (whitespaceMatch) {
+          updated = whitespaceMatch.updated
+          replacements = whitespaceMatch.replacements
+          matchMode = 'whitespace-flexible'
+        }
+      }
+    }
+
+    if (updated === null) {
+      const oldPreview = normalizeLineEndings(oldString).trim().split('\n').slice(0, 4).join('\n')
+      return {
+        data: `not modified ${target}; old_string not found. Read the current file and retry with fresh surrounding context.\n\nRequested old_string preview:\n${oldPreview}`,
+      }
+    }
+
     await fs.writeFile(target, updated, 'utf8')
-    return { data: `updated ${target}; replacements: ${replaceAll ? count : 1}` }
+    return { data: `updated ${target}; replacements: ${replacements}; match: ${matchMode}` }
   },
 })
 
@@ -942,12 +1129,14 @@ const runCommandTool = baseTool<typeof runCommandSchema, AgnetShellProgress>({
   isReadOnly: () => false,
   isDestructive: () => true,
   async description(input) {
-    return `Run ${input.command}`
+    return `Run ${commandFrom(input) || 'a shell command'}`
   },
   async prompt() {
     return "Execute a shell command and return stdout+stderr+exit code. Default shell: PowerShell on Windows, /bin/sh on Unix. Command runs in the current working directory unless working_directory is set."
   },
   async call(input, context, _canUseTool, _parentMessage, onProgress) {
+    const command = commandFrom(input)
+    if (!command) return { data: 'not run; command is required' }
     const cwd = await resolveWorkPath(pickString(input, 'working_directory', 'workingDirectory', 'cwd', 'workdir'))
     const timeoutMs = Math.max(1, asNumber(input.timeout_sec ?? input.timeoutSec ?? input.timeout, 300)) * 1000
     const isWindows = process.platform === 'win32'
@@ -957,8 +1146,8 @@ const runCommandTool = baseTool<typeof runCommandSchema, AgnetShellProgress>({
     const child = spawn(
       isWindows ? 'powershell.exe' : '/bin/sh',
       isWindows
-        ? ['-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', powerShellCommandWithUtf8(input.command)]
-        : ['-c', input.command],
+        ? ['-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', powerShellCommandWithUtf8(command)]
+        : ['-c', command],
       { cwd, windowsHide: true },
     )
     let stdout = ''
@@ -1115,24 +1304,26 @@ const httpRequestTool = baseTool({
   isReadOnly: input => !['POST', 'PUT', 'PATCH', 'DELETE'].includes(httpMethodFrom(input).toUpperCase()),
   isDestructive: input => ['POST', 'PUT', 'PATCH', 'DELETE'].includes(httpMethodFrom(input).toUpperCase()),
   async description(input) {
-    return `${httpMethodFrom(input).toUpperCase()} ${input.url}`
+    return `${httpMethodFrom(input).toUpperCase()} ${requestUrlFrom(input) || 'a URL'}`
   },
   async prompt() {
     return 'Generic HTTP client. Make any HTTP/HTTPS request. Returns status code, response headers, and body.'
   },
   async call(input) {
+    const url = requestUrlFrom(input)
+    if (!url) return { data: 'not requested; url is required' }
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), Math.max(1, asNumber(input.timeout_sec ?? input.timeoutSec, 30)) * 1000)
     try {
       const headers: Record<string, string> = {
-        ...(input.headers ?? {}),
-        Accept: input.accept ?? '*/*',
+        ...stringHeadersFrom(input.headers),
+        Accept: typeof input.accept === 'string' ? input.accept : '*/*',
       }
       const requestBody = stringBodyFrom(input.body ?? input.json)
       if (requestBody !== undefined) headers['Content-Type'] = input.content_type ?? input.contentType ?? 'application/json'
       const authHeader = input.auth_header ?? input.authHeader
       if (authHeader) headers.Authorization = authHeader
-      const { status, headers: responseHeaders, body: responseBody } = await fetchText(input.url, {
+      const { status, headers: responseHeaders, body: responseBody } = await fetchText(url, {
         method: httpMethodFrom(input).toUpperCase(),
         headers,
         body: requestBody,
