@@ -390,13 +390,21 @@ export const sessionsApi = {
     return api.get<{ commands: Array<{ name: string; description: string; argumentHint?: string }> }>(`/api/sessions/${sessionId}/slash-commands`)
   },
 
-  getInspection(sessionId: string, options?: { includeContext?: boolean; timeout?: number; contextOnly?: boolean }) {
+  getInspection(sessionId: string, options?: {
+    includeContext?: boolean
+    timeout?: number
+    contextOnly?: boolean
+    preferEstimate?: boolean
+  }) {
     const query = new URLSearchParams()
     if (options?.includeContext !== undefined) {
       query.set('includeContext', options.includeContext ? '1' : '0')
     }
     if (options?.contextOnly) {
       query.set('contextOnly', '1')
+    }
+    if (options?.preferEstimate) {
+      query.set('preferEstimate', '1')
     }
     const suffix = query.size > 0 ? `?${query.toString()}` : ''
     return api.get<SessionInspectionResponse>(`/api/sessions/${sessionId}/inspection${suffix}`, {

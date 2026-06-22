@@ -189,14 +189,16 @@ describe('ConversationService', () => {
       const service = new ConversationService() as any
       const env = (await service.buildChildEnv('/tmp')) as Record<string, string>
 
-      // Idle watchdog frees a fully-silent stream after 240s...
+      // Idle watchdog frees a fully-silent stream before the UI looks frozen...
       expect(env.CLAUDE_ENABLE_STREAM_WATCHDOG).toBe('1')
-      expect(env.CLAUDE_STREAM_IDLE_TIMEOUT_MS).toBe('240000')
+      expect(env.CLAUDE_STREAM_IDLE_TIMEOUT_MS).toBe('90000')
       // ...but the idle timer is reset by EVERY SSE event, so an upstream that
       // trickles content deltas (a large tool_use input_json_delta) just under
       // 240s apart keeps it alive forever. The overall-duration cap is NOT reset
       // by chunks and is what actually frees that case (#766).
-      expect(env.CLAUDE_STREAM_MAX_DURATION_MS).toBe('600000')
+      expect(env.CLAUDE_STREAM_MAX_DURATION_MS).toBe('300000')
+      expect(env.CLAUDE_THINKING_ONLY_TIMEOUT_MS).toBe('120000')
+      expect(env.CLAUDE_THINKING_ONLY_MAX_CHARS).toBe('32000')
       // Non-streaming fallback stays off — its retry loop also hangs the UI (#766).
       expect(env.CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK).toBe('1')
     } finally {
@@ -808,9 +810,10 @@ describe('ConversationService', () => {
       'ws://127.0.0.1:3456/sdk/test-session?token=test-token',
     )) as Record<string, string>
 
-    // 90s default kills healthy-but-silent third-party streams; 240s keeps the
-    // watchdog useful without aborting slow thinking/prefill phases.
-    expect(env.CLAUDE_STREAM_IDLE_TIMEOUT_MS).toBe('240000')
+    // Pure hidden thinking has its own cap, so the idle window can stay short.
+    expect(env.CLAUDE_STREAM_IDLE_TIMEOUT_MS).toBe('90000')
+    expect(env.CLAUDE_THINKING_ONLY_TIMEOUT_MS).toBe('120000')
+    expect(env.CLAUDE_THINKING_ONLY_MAX_CHARS).toBe('32000')
     // Non-streaming fallback can never finish for slow providers (first byte
     // only arrives after FULL generation), so retries must stay streaming.
     expect(env.CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK).toBe('1')

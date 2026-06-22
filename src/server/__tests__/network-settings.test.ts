@@ -37,7 +37,7 @@ describe('network settings', () => {
   beforeEach(setup)
   afterEach(teardown)
 
-  it('normalizes missing settings to the 600s system-proxy default', () => {
+  it('normalizes missing settings to the desktop system-proxy default', () => {
     expect(normalizeNetworkSettings({})).toEqual({
       aiRequestTimeoutMs: DEFAULT_AI_REQUEST_TIMEOUT_MS,
       proxy: {

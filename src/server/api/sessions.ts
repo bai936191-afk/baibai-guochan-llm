@@ -554,6 +554,7 @@ async function getSessionSlashCommands(sessionId: string): Promise<Response> {
 async function getSessionInspection(sessionId: string, url: URL): Promise<Response> {
   const includeContext = url.searchParams.get('includeContext') !== '0'
   const contextOnly = includeContext && url.searchParams.get('contextOnly') === '1'
+  const preferEstimate = contextOnly && url.searchParams.get('preferEstimate') === '1'
   const workDir =
     conversationService.getSessionWorkDir(sessionId) ||
     await sessionService.getSessionWorkDir(sessionId)
@@ -563,6 +564,28 @@ async function getSessionInspection(sessionId: string, url: URL): Promise<Respon
   }
 
   const active = conversationService.hasSession(sessionId)
+  if (preferEstimate) {
+    const transcriptContextEstimate = await sessionService.getTranscriptContextEstimate(sessionId)
+    const initMessage = conversationService.getSessionInitMessage(sessionId)
+    const permissionMode = active
+      ? conversationService.getSessionPermissionMode(sessionId)
+      : 'default'
+
+    return Response.json({
+      active,
+      status: {
+        sessionId,
+        workDir,
+        permissionMode,
+        cwd: typeof initMessage?.cwd === 'string' ? initMessage.cwd : workDir,
+        model: transcriptContextEstimate?.model ??
+          (typeof initMessage?.model === 'string' ? initMessage.model : undefined),
+      },
+      ...(transcriptContextEstimate ? { contextEstimate: transcriptContextEstimate } : {}),
+      errors: transcriptContextEstimate ? {} : { context: 'Transcript context estimate is not available yet' },
+    })
+  }
+
   const launchInfo = await sessionService.getSessionLaunchInfo(sessionId).catch(() => null)
   const permissionMode = active
     ? conversationService.getSessionPermissionMode(sessionId)

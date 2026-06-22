@@ -22,8 +22,8 @@ export type NetworkSettings = {
 // ollama, llama.cpp, ...) often send nothing — not headers, not an SSE ping —
 // for minutes while prefilling a large context (#766, #826). Once tokens start
 // flowing the CLI hands off to the shorter mid-stream idle watchdog. The
-// default matches the SDK's own 600s.
-export const DEFAULT_AI_REQUEST_TIMEOUT_MS = 600_000
+// default keeps a stuck local/provider request recoverable for normal desktop use.
+export const DEFAULT_AI_REQUEST_TIMEOUT_MS = 120_000
 export const MIN_AI_REQUEST_TIMEOUT_MS = 30_000
 export const MAX_AI_REQUEST_TIMEOUT_MS = 1_800_000
 

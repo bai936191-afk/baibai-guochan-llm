@@ -773,7 +773,8 @@ describe('Content-only pages render without errors', () => {
     expect(vi.mocked(sessionsApi.getInspection)).toHaveBeenCalledWith(SESSION_ID, {
       includeContext: true,
       contextOnly: true,
-      timeout: 20_000,
+      preferEstimate: true,
+      timeout: 8_000,
     })
 
     resetPageStores()

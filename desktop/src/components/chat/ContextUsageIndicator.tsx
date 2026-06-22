@@ -21,7 +21,7 @@ type Props = {
 }
 
 const ACTIVE_REFRESH_MS = 30_000
-const CONTEXT_REQUEST_TIMEOUT_MS = 20_000
+const CONTEXT_REQUEST_TIMEOUT_MS = 8_000
 const AUTO_REFRESH_MIN_INTERVAL_MS = 10_000
 // Right after a compaction the CLI may still be busy finishing the turn, so
 // the forced refresh can time out — retry once instead of keeping the stale
@@ -124,6 +124,7 @@ export function ContextUsageIndicator({
     const request = sessionsApi.getInspection(activeSessionId, {
       includeContext: true,
       contextOnly: true,
+      preferEstimate: true,
       timeout: CONTEXT_REQUEST_TIMEOUT_MS,
     })
       .then((inspection) => {

@@ -1517,9 +1517,11 @@ export class SessionService {
       outputTokens: number
       cacheReadInputTokens: number
       cacheCreationInputTokens: number
+      entryIndex: number
+      messageId?: string
     } | null = null
 
-    for (const entry of entries) {
+    for (const [entryIndex, entry] of entries.entries()) {
       const usage = entry.message?.usage
       const model = entry.message?.model
       if (!usage || typeof model !== 'string') continue
@@ -1537,6 +1539,8 @@ export class SessionService {
         outputTokens,
         cacheReadInputTokens,
         cacheCreationInputTokens,
+        entryIndex,
+        messageId: typeof entry.message?.id === 'string' ? entry.message.id : undefined,
       }
     }
 
@@ -1547,8 +1551,41 @@ export class SessionService {
     const transcriptMessages = entries.filter(entry =>
       entry.type === 'user' || entry.type === 'assistant' || entry.type === 'attachment',
     ) as Parameters<typeof roughTokenCountEstimationForMessages>[0]
-    const estimatedTokens =
-      roughTokenCountEstimationForMessages(transcriptMessages) || promptTokens
+    const fullTranscriptEstimate =
+      roughTokenCountEstimationForMessages(transcriptMessages)
+    let latestUsageAnchorIndex = latest.entryIndex
+    if (latest.messageId) {
+      for (let i = latest.entryIndex - 1; i >= 0; i--) {
+        const priorMessageId = entries[i]?.message?.id
+        if (priorMessageId === latest.messageId) {
+          latestUsageAnchorIndex = i
+          continue
+        }
+        if (typeof priorMessageId === 'string') break
+      }
+    }
+    const tailMessages = entries.slice(latestUsageAnchorIndex + 1).filter(entry =>
+      entry.type === 'user' || entry.type === 'assistant' || entry.type === 'attachment',
+    ) as Parameters<typeof roughTokenCountEstimationForMessages>[0]
+    const tailEstimate = roughTokenCountEstimationForMessages(tailMessages)
+    const providerUsageTokens = promptTokens + latest.outputTokens
+    const usageTrust = getProviderUsageTrust({
+      isFirstPartyAnthropic: isFirstPartyAnthropicBaseUrl(),
+    })
+    let estimatedTokens =
+      fullTranscriptEstimate || providerUsageTokens || promptTokens
+    if (
+      fullTranscriptEstimate > 0 &&
+      providerUsageTokens > 0
+    ) {
+      const fullTranscriptSpikeFloor = Math.max(
+        providerUsageTokens * 4,
+        providerUsageTokens + 50_000,
+      )
+      if (fullTranscriptEstimate > fullTranscriptSpikeFloor) {
+        estimatedTokens = providerUsageTokens + tailEstimate
+      }
+    }
     const contextBudget = calculateContextBudget({
       estimatedTokens,
       contextWindow: rawMaxTokens,
@@ -1558,9 +1595,7 @@ export class SessionService {
         cache_read_input_tokens: latest.cacheReadInputTokens,
         cache_creation_input_tokens: latest.cacheCreationInputTokens,
       },
-      usageTrust: getProviderUsageTrust({
-        isFirstPartyAnthropic: isFirstPartyAnthropicBaseUrl(),
-      }),
+      usageTrust,
       hasMediaInput: hasMediaInput(transcriptMessages),
     })
     const totalTokens = contextBudget.usedTokens
@@ -1572,7 +1607,8 @@ export class SessionService {
       { name: 'Output tokens', tokens: latest.outputTokens, color: '#2f7d32' },
     ]
     const contextCategories: TranscriptContextEstimate['categories'] =
-      contextBudget.ignoredUsageReason === 'low_trust_media_usage'
+      contextBudget.source === 'estimate' ||
+      contextBudget.ignoredUsageReason !== undefined
         ? [{ name: 'Estimated context', tokens: totalTokens, color: '#8f3217' }]
         : usageCategories
     const categories: TranscriptContextEstimate['categories'] = [

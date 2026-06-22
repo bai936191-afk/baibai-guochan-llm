@@ -197,6 +197,16 @@ describe('shouldIgnoreLowTrustUsage', () => {
     })).toBe(true)
   })
 
+  test('ignores suspicious low-trust text-only usage spikes', () => {
+    expect(shouldIgnoreLowTrustUsage({
+      usageTrust: 'low',
+      hasMediaInput: false,
+      usageTokens: 260_000,
+      estimatedTokens: 35_000,
+      contextWindow: 200_000,
+    })).toBe(true)
+  })
+
   test('keeps high-trust usage', () => {
     expect(shouldIgnoreLowTrustUsage({
       usageTrust: 'high',
@@ -267,6 +277,57 @@ describe('calculateContextBudget', () => {
       providerUsageTokens: 221_000,
       estimatedTokens: 30_000,
       ignoredUsageReason: 'low_trust_media_usage',
+    })
+  })
+
+  test('ignores suspicious low-trust text-only usage spikes', () => {
+    expect(calculateContextBudget({
+      estimatedTokens: 35_000,
+      contextWindow: 200_000,
+      currentUsage: {
+        input_tokens: 260_000,
+        cache_creation_input_tokens: 0,
+        cache_read_input_tokens: 0,
+        output_tokens: 1_000,
+      },
+      usageTrust: 'low',
+      hasMediaInput: false,
+    })).toEqual({
+      usedTokens: 35_000,
+      source: 'estimate',
+      providerUsageTokens: 261_000,
+      estimatedTokens: 35_000,
+      ignoredUsageReason: 'low_trust_usage_spike',
+    })
+  })
+
+  test('ignores suspicious low-trust usage spikes below a 1M context window', () => {
+    const budget = calculateContextBudget({
+      estimatedTokens: 90_000,
+      contextWindow: 1_000_000,
+      currentUsage: {
+        input_tokens: 84_000,
+        cache_creation_input_tokens: 0,
+        cache_read_input_tokens: 430_000,
+        output_tokens: 6_000,
+      },
+      usageTrust: 'low',
+      hasMediaInput: false,
+    })
+
+    expect(budget).toEqual({
+      usedTokens: 90_000,
+      source: 'estimate',
+      providerUsageTokens: 520_000,
+      estimatedTokens: 90_000,
+      ignoredUsageReason: 'low_trust_usage_spike',
+    })
+    expect(calculateContextPercentagesFromTokens(
+      budget.usedTokens,
+      1_000_000,
+    )).toEqual({
+      used: 9,
+      remaining: 91,
     })
   })
 

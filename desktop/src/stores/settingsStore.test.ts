@@ -215,7 +215,7 @@ describe('settingsStore network persistence', () => {
     await useSettingsStore.getState().fetchAll()
 
     expect(useSettingsStore.getState().network).toEqual({
-      aiRequestTimeoutMs: 600_000,
+      aiRequestTimeoutMs: 120_000,
       proxy: {
         mode: 'system',
         url: '',

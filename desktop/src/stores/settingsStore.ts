@@ -149,7 +149,7 @@ const DEFAULT_UPDATE_PROXY_SETTINGS: UpdateProxySettings = {
 }
 
 const DEFAULT_NETWORK_SETTINGS: NetworkSettings = {
-  aiRequestTimeoutMs: 600_000,
+  aiRequestTimeoutMs: 120_000,
   proxy: {
     mode: 'system',
     url: '',

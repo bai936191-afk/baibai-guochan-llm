@@ -635,6 +635,10 @@ export class ConversationService {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         this.removeOutputCallback(sessionId, handleOutput)
+        this.sendSdkMessage(sessionId, {
+          type: 'control_cancel_request',
+          request_id: requestId,
+        })
         reject(new Error(`Timed out waiting for ${String(request.subtype ?? 'control')} response`))
       }, responseTimeoutMs)
 
@@ -1192,14 +1196,16 @@ export class ConversationService {
       // phases emit no SSE bytes, and many gateways never send pings), so the
       // CLI's 90s idle default kills healthy streams (#766). 240s still frees
       // a truly dead connection without shooting slow ones.
-      CLAUDE_STREAM_IDLE_TIMEOUT_MS: cleanEnv.CLAUDE_STREAM_IDLE_TIMEOUT_MS || '240000',
+      CLAUDE_STREAM_IDLE_TIMEOUT_MS: cleanEnv.CLAUDE_STREAM_IDLE_TIMEOUT_MS || '90000',
       // Overall wall-clock cap for one streaming response, NOT reset by chunks.
       // The 240s idle timer above is reset by every SSE event, so an upstream
       // that trickles content deltas (e.g. a huge tool_use input_json_delta)
       // just under 240s apart keeps it alive forever and the request hangs with
       // no completion (#766: "卡住" with slowly growing tokens). This independent
       // cap frees such a stream after a fixed duration regardless of trickle.
-      CLAUDE_STREAM_MAX_DURATION_MS: cleanEnv.CLAUDE_STREAM_MAX_DURATION_MS || '600000',
+      CLAUDE_STREAM_MAX_DURATION_MS: cleanEnv.CLAUDE_STREAM_MAX_DURATION_MS || '300000',
+      CLAUDE_THINKING_ONLY_TIMEOUT_MS: cleanEnv.CLAUDE_THINKING_ONLY_TIMEOUT_MS || '120000',
+      CLAUDE_THINKING_ONLY_MAX_CHARS: cleanEnv.CLAUDE_THINKING_ONLY_MAX_CHARS || '32000',
       // Time-to-first-token budget: how long to wait for the FIRST streamed
       // chunk after response headers arrive. The idle timer above is the wrong
       // knob for slow prefill — it kills healthy local/3P models that take

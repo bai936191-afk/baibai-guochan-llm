@@ -16,7 +16,7 @@ export type ContextBudget = {
   source: ContextBudgetSource
   providerUsageTokens: number | null
   estimatedTokens: number
-  ignoredUsageReason?: 'low_trust_media_usage'
+  ignoredUsageReason?: 'low_trust_media_usage' | 'low_trust_usage_spike'
 }
 
 export function getProviderUsageTrust(args: {
@@ -100,9 +100,7 @@ export function shouldIgnoreLowTrustUsage(
   args: ShouldIgnoreLowTrustUsageArgs,
 ): boolean {
   if (args.usageTrust === 'high') return false
-  if (!args.hasMediaInput) return false
   if (args.estimatedTokens <= 0) return false
-  if (args.usageTokens < args.contextWindow) return false
   if (args.estimatedTokens >= args.contextWindow) return false
 
   const suspiciousFloor = Math.max(
@@ -142,7 +140,9 @@ export function calculateContextBudget(
       source: 'estimate',
       providerUsageTokens,
       estimatedTokens: args.estimatedTokens,
-      ignoredUsageReason: 'low_trust_media_usage',
+      ignoredUsageReason: args.hasMediaInput
+        ? 'low_trust_media_usage'
+        : 'low_trust_usage_spike',
     }
   }
 

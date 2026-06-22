@@ -1984,12 +1984,131 @@ async function* queryModel(
       parseInt(process.env.CLAUDE_STREAM_MAX_DURATION_MS || "", 10) || 0;
     let streamIdleAborted = false;
     // Which watchdog tripped, so the thrown error message is accurate.
-    let streamAbortReason: "idle" | "max_duration" | null = null;
+    let streamAbortReason: "idle" | "max_duration" | "thinking_only" | null =
+      null;
     // performance.now() snapshot when watchdog fires, for measuring abort propagation delay
     let streamWatchdogFiredAt: number | null = null;
     let streamIdleWarningTimer: ReturnType<typeof setTimeout> | null = null;
     let streamIdleTimer: ReturnType<typeof setTimeout> | null = null;
     let streamMaxDurationTimer: ReturnType<typeof setTimeout> | null = null;
+    const THINKING_ONLY_TIMEOUT_MS =
+      parseInt(process.env.CLAUDE_THINKING_ONLY_TIMEOUT_MS || "", 10) ||
+      120_000;
+    const THINKING_ONLY_MAX_CHARS =
+      parseInt(process.env.CLAUDE_THINKING_ONLY_MAX_CHARS || "", 10) ||
+      32_000;
+    let thinkingOnlyStartedAt: number | null = null;
+    let thinkingOnlyChars = 0;
+    let streamHasActionableOutput = false;
+    let streamSawToolUse = false;
+    let streamSawThinkingOutput = false;
+
+    function noteActionableStreamOutput(kind: "text" | "tool" | "other"): void {
+      streamHasActionableOutput = true;
+      thinkingOnlyStartedAt = null;
+      thinkingOnlyChars = 0;
+      if (kind === "tool") {
+        streamSawToolUse = true;
+      }
+    }
+
+    function noteThinkingOnlyDelta(text: string): void {
+      if (
+        !streamWatchdogEnabled ||
+        streamHasActionableOutput ||
+        streamIdleAborted ||
+        (THINKING_ONLY_TIMEOUT_MS <= 0 && THINKING_ONLY_MAX_CHARS <= 0)
+      ) {
+        return;
+      }
+
+      if (thinkingOnlyStartedAt === null) {
+        thinkingOnlyStartedAt = performance.now();
+      }
+      streamSawThinkingOutput = true;
+      thinkingOnlyChars += text.length;
+
+      const elapsedMs = performance.now() - thinkingOnlyStartedAt;
+      const timedOut =
+        THINKING_ONLY_TIMEOUT_MS > 0 && elapsedMs >= THINKING_ONLY_TIMEOUT_MS;
+      const tooLarge =
+        THINKING_ONLY_MAX_CHARS > 0 &&
+        thinkingOnlyChars >= THINKING_ONLY_MAX_CHARS;
+      if (!timedOut && !tooLarge) {
+        return;
+      }
+
+      streamIdleAborted = true;
+      streamAbortReason = "thinking_only";
+      streamWatchdogFiredAt = performance.now();
+      logForDebugging(
+        `Streaming thinking-only timeout: no text or tool call after ${(elapsedMs / 1000).toFixed(
+          1,
+        )}s / ${thinkingOnlyChars} chars, aborting stream`,
+        { level: "error" },
+      );
+      logForDiagnosticsNoPII("error", "cli_streaming_thinking_only_timeout", {
+        elapsedMs: Math.round(elapsedMs),
+        chars: thinkingOnlyChars,
+        timeoutMs: THINKING_ONLY_TIMEOUT_MS,
+        maxChars: THINKING_ONLY_MAX_CHARS,
+      });
+      logEvent("tengu_streaming_idle_timeout", {
+        model:
+          options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        request_id: (streamRequestId ??
+          "unknown") as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        timeout_ms: Math.round(elapsedMs),
+        reason:
+          "thinking_only" as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+      });
+      releaseStreamResources();
+      throw new Error(
+        "Stream thinking-only timeout - no actionable content received",
+      );
+    }
+
+    function messageHasCompletedText(message: AssistantMessage): boolean {
+      const content = message.message.content;
+      if (typeof content === "string") {
+        return content.length > 0;
+      }
+      if (!Array.isArray(content)) {
+        return false;
+      }
+      return content.some(
+        (block) =>
+          typeof block === "object" &&
+          block !== null &&
+          "type" in block &&
+          block.type === "text" &&
+          "text" in block &&
+          typeof block.text === "string" &&
+          block.text.length > 0,
+      );
+    }
+
+    function messageHasCompletedToolUse(message: AssistantMessage): boolean {
+      const content = message.message.content;
+      if (!Array.isArray(content)) {
+        return false;
+      }
+      return content.some(
+        (block) =>
+          typeof block === "object" &&
+          block !== null &&
+          "type" in block &&
+          (block.type === "tool_use" || block.type === "server_tool_use"),
+      );
+    }
+
+    function hasCompletedActionableMessage(): boolean {
+      return (
+        newMessages.some(messageHasCompletedText) ||
+        newMessages.some(messageHasCompletedToolUse)
+      );
+    }
+
     function clearStreamIdleTimers(): void {
       if (streamIdleWarningTimer !== null) {
         clearTimeout(streamIdleWarningTimer);
@@ -2140,12 +2259,14 @@ async function* queryModel(
           case "content_block_start":
             switch (part.content_block.type) {
               case "tool_use":
+                noteActionableStreamOutput("tool");
                 contentBlocks[part.index] = {
                   ...part.content_block,
                   input: "",
                 };
                 break;
               case "server_tool_use":
+                noteActionableStreamOutput("tool");
                 contentBlocks[part.index] = {
                   ...part.content_block,
                   input: "" as unknown as { [key: string]: unknown },
@@ -2223,6 +2344,9 @@ async function* queryModel(
                 });
                 throw new Error("Content block is not a connector_text block");
               }
+              if (delta.connector_text.length > 0) {
+                noteActionableStreamOutput("text");
+              }
               contentBlock.connector_text += delta.connector_text;
             } else {
               switch (delta.type) {
@@ -2253,6 +2377,7 @@ async function* queryModel(
                     });
                     throw new Error("Content block input is not a string");
                   }
+                  noteActionableStreamOutput("tool");
                   contentBlock.input += delta.partial_json;
                   break;
                 case "text_delta":
@@ -2266,6 +2391,9 @@ async function* queryModel(
                         contentBlock.type as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
                     });
                     throw new Error("Content block is not a text block");
+                  }
+                  if (delta.text.length > 0) {
+                    noteActionableStreamOutput("text");
                   }
                   contentBlock.text += delta.text;
                   break;
@@ -2303,6 +2431,7 @@ async function* queryModel(
                     throw new Error("Content block is not a thinking block");
                   }
                   contentBlock.thinking += delta.thinking;
+                  noteThinkingOnlyDelta(delta.thinking);
                   break;
               }
             }
@@ -2483,6 +2612,8 @@ async function* queryModel(
         throw new Error(
           streamAbortReason === "max_duration"
             ? "Stream max duration exceeded - no completion received"
+            : streamAbortReason === "thinking_only"
+              ? "Stream thinking-only timeout - no actionable content received"
             : "Stream idle timeout - no chunks received",
         );
       }
@@ -2513,7 +2644,25 @@ async function* queryModel(
           request_id: (streamRequestId ??
             "unknown") as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
         });
-        throw new Error("Stream ended without receiving any events");
+        throw new Error(
+          streamSawThinkingOutput
+            ? "Stream ended after thinking without actionable output"
+            : "Stream ended without receiving any events",
+        );
+      }
+
+      if (streamSawThinkingOutput && !hasCompletedActionableMessage()) {
+        logForDebugging(
+          "Stream completed with thinking only and no text/tool output",
+          { level: "error" },
+        );
+        logEvent("tengu_stream_no_events", {
+          model:
+            options.model as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+          request_id: (streamRequestId ??
+            "unknown") as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+        });
+        throw new Error("Stream ended after thinking without actionable output");
       }
 
       // Log summary if any stalls occurred during streaming
@@ -2648,12 +2797,28 @@ async function* queryModel(
       // execution when streaming tool execution is active: the partial stream
       // starts a tool, then the non-streaming retry produces the same tool_use
       // and runs it again. See inc-4258.
+      //
+      // Desktop keeps that flag enabled by default for third-party providers,
+      // but a zero-output stream is different: query.ts has not received a
+      // completed assistant message yet, so no tool_use block can have been
+      // handed to the executor. Allowing the existing non-streaming fallback in
+      // that narrow case prevents proxy failures like "200 OK + empty SSE" from
+      // surfacing as a hard "Stream ended without receiving any events" error.
+      const hasCompletedText = newMessages.some(messageHasCompletedText);
+      const hasCompletedToolUse = newMessages.some(messageHasCompletedToolUse);
+      const canFallbackWithoutDuplicateTools =
+        !signal.aborted &&
+        !streamSawThinkingOutput &&
+        !streamSawToolUse &&
+        !hasCompletedToolUse &&
+        !hasCompletedText;
       const disableFallback =
-        isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK) ||
-        getFeatureValue_CACHED_MAY_BE_STALE(
-          "tengu_disable_streaming_to_non_streaming_fallback",
-          false,
-        );
+        !canFallbackWithoutDuplicateTools &&
+        (isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK) ||
+          getFeatureValue_CACHED_MAY_BE_STALE(
+            "tengu_disable_streaming_to_non_streaming_fallback",
+            false,
+          ));
 
       if (disableFallback) {
         logForDebugging(

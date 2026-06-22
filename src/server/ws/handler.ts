@@ -147,6 +147,7 @@ type RuntimeOverride = {
 
 type ActiveUserTurnState = {
   messageSent: boolean
+  watchdogTimer?: ReturnType<typeof setTimeout>
 }
 
 const runtimeOverrides = new Map<string, RuntimeOverride>()
@@ -164,6 +165,7 @@ const prewarmedSessions = new Set<string>()
 const prewarmIdleTimers = new Map<string, ReturnType<typeof setTimeout>>()
 const DEFAULT_PREWARM_IDLE_TIMEOUT_MS = 5 * 60_000
 const VALID_EFFORT_LEVELS = new Set(['low', 'medium', 'high', 'max'])
+const DEFAULT_ACTIVE_TURN_IDLE_TIMEOUT_MS = 7 * 60_000
 
 async function sendRepositoryStartupStatus(
   ws: ServerWebSocket<WebSocketData>,
@@ -490,12 +492,137 @@ async function handleUserMessage(
 
   userMessageSent = true
   activeTurn.messageSent = true
+  armActiveTurnWatchdog(sessionId, activeTurn)
 }
 
 function clearActiveUserTurn(sessionId: string, activeTurn: ActiveUserTurnState): void {
   if (activeUserTurns.get(sessionId) === activeTurn) {
+    clearActiveTurnWatchdog(activeTurn)
     activeUserTurns.delete(sessionId)
   }
+}
+
+function clearActiveTurnWatchdog(activeTurn: ActiveUserTurnState): void {
+  if (!activeTurn.watchdogTimer) return
+  clearTimeout(activeTurn.watchdogTimer)
+  activeTurn.watchdogTimer = undefined
+}
+
+function getActiveTurnIdleTimeoutMs(): number {
+  const raw = process.env.CC_HAHA_ACTIVE_TURN_IDLE_TIMEOUT_MS
+  if (!raw) return DEFAULT_ACTIVE_TURN_IDLE_TIMEOUT_MS
+  const parsed = Number.parseInt(raw, 10)
+  return Number.isFinite(parsed) && parsed >= 0
+    ? parsed
+    : DEFAULT_ACTIVE_TURN_IDLE_TIMEOUT_MS
+}
+
+function armActiveTurnWatchdog(
+  sessionId: string,
+  activeTurn: ActiveUserTurnState,
+): void {
+  const timeoutMs = getActiveTurnIdleTimeoutMs()
+  clearActiveTurnWatchdog(activeTurn)
+  if (timeoutMs <= 0) return
+
+  activeTurn.watchdogTimer = setTimeout(() => {
+    if (activeUserTurns.get(sessionId) !== activeTurn || !activeTurn.messageSent) {
+      return
+    }
+
+    const summary = `Agent turn produced no actionable progress for ${Math.round(timeoutMs / 1000)}s; stopping stuck CLI session.`
+    void diagnosticsService.recordEvent({
+      type: 'active_turn_idle_timeout',
+      severity: 'error',
+      sessionId,
+      summary,
+      details: { timeoutMs },
+    })
+    console.error(`[WS] ${summary} session=${sessionId}`)
+
+    sessionStopRequested.add(sessionId)
+    cancelSessionDisconnectWatcher(sessionId)
+    clearActiveUserTurn(sessionId, activeTurn)
+
+    if (conversationService.hasSession(sessionId)) {
+      conversationService.sendInterrupt(sessionId)
+      setTimeout(() => {
+        if (conversationService.hasSession(sessionId)) {
+          conversationService.stopSession(sessionId)
+        }
+      }, 3_000)
+    }
+
+    sendToSession(sessionId, {
+      type: 'error',
+      message: 'Agent response timed out after no progress. The stuck turn was stopped; you can send again.',
+      code: 'CLI_TURN_IDLE_TIMEOUT',
+    })
+    sendToSession(sessionId, { type: 'status', state: 'idle' })
+  }, timeoutMs)
+}
+
+function noteActiveTurnOutput(
+  sessionId: string,
+  activeTurn: ActiveUserTurnState,
+  cliMsg: any,
+): void {
+  if (activeUserTurns.get(sessionId) !== activeTurn || !activeTurn.messageSent) {
+    return
+  }
+  if (!isActionableTurnProgress(cliMsg)) {
+    return
+  }
+  armActiveTurnWatchdog(sessionId, activeTurn)
+}
+
+function isActionableTurnProgress(cliMsg: any): boolean {
+  if (!cliMsg || typeof cliMsg !== 'object') return false
+  if (cliMsg.type === 'result') return true
+  if (cliMsg.type === 'tool_progress' || cliMsg.type === 'control_request') return true
+
+  if (cliMsg.type === 'assistant') {
+    return assistantMessageHasActionableContent(cliMsg)
+  }
+
+  if (cliMsg.type !== 'stream_event') return false
+  const event = cliMsg.event
+  if (!event || typeof event !== 'object') return false
+
+  if (event.type === 'content_block_start') {
+    const blockType = event.content_block?.type
+    return blockType === 'text' || blockType === 'tool_use' || blockType === 'server_tool_use'
+  }
+
+  if (event.type === 'content_block_delta') {
+    const delta = event.delta
+    if (!delta || typeof delta !== 'object') return false
+    if (delta.type === 'text_delta') {
+      return typeof delta.text === 'string' && delta.text.length > 0
+    }
+    if (delta.type === 'input_json_delta') {
+      return typeof delta.partial_json === 'string' && delta.partial_json.length > 0
+    }
+    if (delta.type === 'connector_text_delta') {
+      return typeof delta.connector_text === 'string' && delta.connector_text.length > 0
+    }
+  }
+
+  return false
+}
+
+function assistantMessageHasActionableContent(cliMsg: any): boolean {
+  const content = cliMsg.message?.content
+  if (typeof content === 'string') return content.length > 0
+  if (!Array.isArray(content)) return false
+  return content.some((block: unknown) => {
+    if (!block || typeof block !== 'object') return false
+    const typedBlock = block as { type?: unknown; text?: unknown }
+    if (typedBlock.type === 'text') {
+      return typeof typedBlock.text === 'string' && typedBlock.text.length > 0
+    }
+    return typedBlock.type === 'tool_use' || typedBlock.type === 'server_tool_use'
+  })
 }
 
 function bindActiveUserTurnCompletion(
@@ -504,6 +631,7 @@ function bindActiveUserTurnCompletion(
   activeTurn: ActiveUserTurnState,
 ): () => void {
   const callback = (cliMsg: any) => {
+    noteActiveTurnOutput(sessionId, activeTurn, cliMsg)
     if (!activeTurn.messageSent || cliMsg?.type !== 'result') return
 
     conversationService.removeOutputCallback(sessionId, callback)
@@ -964,6 +1092,11 @@ function handleStopGeneration(ws: ServerWebSocket<WebSocketData>) {
   console.log(`[WS] Stop generation requested for session: ${sessionId}`)
 
   sessionStopRequested.add(sessionId)
+  const activeTurn = activeUserTurns.get(sessionId)
+  if (activeTurn) {
+    clearActiveUserTurn(sessionId, activeTurn)
+  }
+  cancelSessionDisconnectWatcher(sessionId)
 
   if (conversationService.hasSession(sessionId)) {
     // First try graceful interrupt via SDK control message
@@ -1322,7 +1455,9 @@ function cleanupSessionRuntimeState(sessionId: string) {
   sessionSlashCommands.delete(sessionId)
   sessionTitleState.delete(sessionId)
   runtimeOverrides.delete(sessionId)
-  activeUserTurns.delete(sessionId)
+  const activeTurn = activeUserTurns.get(sessionId)
+  if (activeTurn) clearActiveUserTurn(sessionId, activeTurn)
+  sessionStopRequested.delete(sessionId)
   deferredRuntimeRestarts.delete(sessionId)
   deferredPermissionModes.delete(sessionId)
   runtimeTransitionPromises.delete(sessionId)
@@ -2889,11 +3024,14 @@ export function getActiveSessionIds(): string[] {
 export function __resetWebSocketHandlerStateForTests(): void {
   for (const timer of sessionCleanupTimers.values()) clearTimeout(timer)
   for (const timer of prewarmIdleTimers.values()) clearTimeout(timer)
+  for (const activeTurn of activeUserTurns.values()) clearActiveTurnWatchdog(activeTurn)
   for (const remove of sessionDisconnectWatchers.values()) remove()
   activeSessions.clear()
   clientOutputCallbacks.clear()
   sessionCleanupTimers.clear()
   sessionDisconnectWatchers.clear()
+  activeUserTurns.clear()
+  sessionStopRequested.clear()
   prewarmPendingSessions.clear()
   prewarmedSessions.clear()
   prewarmIdleTimers.clear()

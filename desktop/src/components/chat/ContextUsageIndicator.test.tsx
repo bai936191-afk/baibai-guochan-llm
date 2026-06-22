@@ -109,7 +109,8 @@ describe('ContextUsageIndicator request behavior', () => {
     expect(sessionsApiMock.getInspection).toHaveBeenCalledWith('session-1', {
       includeContext: true,
       contextOnly: true,
-      timeout: 20_000,
+      preferEstimate: true,
+      timeout: 8_000,
     })
   })
 
